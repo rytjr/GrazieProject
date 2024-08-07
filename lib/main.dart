@@ -44,7 +44,7 @@ class _StartScreenState extends State<StartScreen> {
 
   Future<void> loadData() async {
     // 데이터 로드 시뮬레이션 (예: 네트워크 요청)
-    await Future.delayed(Duration(seconds: 1));
+    await Future.delayed(Duration(seconds: 10));
   }
 
   @override

@@ -1,0 +1,22 @@
+allprojects {
+    ext {
+        // Kotlin의 버전을 여기에서 정의합니다.
+        kotlin_version = '1.8.0' // 또는 프로젝트에 맞는 최신 버전으로 수정
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
