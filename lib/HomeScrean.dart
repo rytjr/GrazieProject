@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:fluttertest/Post.dart';
+import 'package:fluttertest/ApiService.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -7,6 +10,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  String selectedStore = "구리인창DT"; // 기본 매장
+  String selectedOption = "매장 이용"; // 기본 옵션
+
+  late Future<Post?> post;
+
+  @override
+  void initState() {
+    super.initState();
+    post = ApiService().fetchImageUrl();  // 여기에서 반드시 초기화
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -231,8 +244,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  static List<Widget> _widgetOptions = <Widget>[
-    HomeContent(),
+  static List<Widget> _widgetOptions(String imageUrl) => <Widget>[
+    HomeContent(imageUrl: imageUrl),
     Text(
       'Index 1: Order',
     ),
@@ -267,78 +280,160 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      body: FutureBuilder<Post?>(
+        future: post,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            print('Loading...');
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            print('Error: ${snapshot.error}');
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            print('No data found');
+            return Center(child: Text('No image found'));
+          } else {
+            print('Image URL: ${snapshot.data!.imageUrl}');
+            return _widgetOptions(snapshot.data!.imageUrl)[_selectedIndex];
+          }
+        },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(
-              AssetImage('android/assets/images/order.png'), // 경로 수정 필요
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_selectedIndex == 1)
+            Container(
+              color: Colors.black87,
+              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '구리인창DT ($selectedOption)',
+                    style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: Colors.white),
+                ],
+              ),
+              width: double.infinity,
             ),
-            label: 'Order',
-          ),
-          BottomNavigationBarItem(
-            icon: ImageIcon(
-              AssetImage('android/assets/images/other.png'), // 경로 수정 필요
-            ),
-            label: 'Other',
+          BottomNavigationBar(
+            items: [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                  icon: ImageIcon(
+                    AssetImage('android/assets/images/order.png'), // 경로 수정 필요
+                  ),
+                  label: 'Order',
+              ),
+              BottomNavigationBarItem(
+                icon: ImageIcon(
+                  AssetImage('android/assets/images/other.png'), // 경로 수정 필요
+                ),
+                label: 'Other',
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: Color(0xFF5B1333),
+            onTap: _onItemTapped,
           ),
         ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFF5B1333),
-        onTap: _onItemTapped,
       ),
     );
   }
 }
-
 class HomeContent extends StatelessWidget {
+
+  final String imageUrl;
+
+  HomeContent({required this.imageUrl});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white, // 배경색을 하얀색으로 설정
-      padding: EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 10),
-          Text(
-            '2024.7.10 | DAILY',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 이미지 섹션
+        Image.network(
+          imageUrl,
+          width: double.infinity,
+          height: 250,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Text('Failed to load image'),
+            );
+          },
+        ),
+        SizedBox(height: 16.0),
+
+        // "반갑습니다. 구교석님" 텍스트 섹션
+        // 전체를 하나의 버튼으로 감싼 섹션
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.all(16.0),
+              backgroundColor: Colors.white, // 버튼의 배경색
+              foregroundColor: Colors.black, // 버튼 텍스트 색상
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            onPressed: () {
+              // 버튼 클릭 시 동작
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // "반갑습니다. 구교석님" 텍스트 섹션
+                Text(
+                  '반갑습니다. 구교석님',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8.0),
+
+                // Coupon 버튼 섹션
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4.0),
+                    color: Colors.grey.shade200,
+                  ),
+                  child: Text(
+                    'Coupon',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 8.0),
+
+                // "내정보 확인" 버튼 섹션
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '내정보 확인',
+                    style: TextStyle(
+                      fontSize: 16.0,
+                      color: Colors.blue, // 텍스트 색상
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 10),
-          Text(
-            '반갑습니다. 구교석님',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
-          SizedBox(height: 5),
-          Text(
-            'Coupon',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.black,
-            ),
-          ),
-          SizedBox(height: 10),
-          Image.asset('assets/images/mango_smoothie.jpeg'), // 이미지 경로 수정 필요
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
-
 void main() {
   runApp(MaterialApp(
     home: HomeScreen(),
