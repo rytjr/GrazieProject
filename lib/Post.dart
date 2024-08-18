@@ -28,14 +28,14 @@ import 'package:dio/dio.dart';  // Dio 패키지 사용
 }
 */
 class Post {
-  final String imageUrl;
+  final List<String> imageUrls;
 
-  Post({required this.imageUrl});
+  Post({required this.imageUrls});
 
   // JSON 데이터를 Post 객체로 변환
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
-      imageUrl: json['imageUrl'],
+      imageUrls: List<String>.from(json['imageUrls']),
     );
   }
 }

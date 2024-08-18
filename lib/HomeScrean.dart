@@ -18,7 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    post = ApiService().fetchImageUrl();  // 여기에서 반드시 초기화
+    post = ApiService().fetchImageUrls();  // 여러 개의 이미지를 받아오는 메서드로 변경
   }
 
   void _onItemTapped(int index) {
@@ -244,14 +244,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  static List<Widget> _widgetOptions(String imageUrl) => <Widget>[
-    HomeContent(imageUrl: imageUrl),
-    Text(
-      'Index 1: Order',
-    ),
-    Text(
-      'Index 2: Other',
-    ),
+  static List<Widget> _widgetOptions(List<String> imageUrls) => <Widget>[
+    HomeContent(imageUrls: imageUrls), // 여러 개의 이미지를 받는 HomeContent로 변경
+    Text('Index 1: Order'),
+    Text('Index 2: Other'),
   ];
 
   @override
@@ -284,17 +280,16 @@ class _HomeScreenState extends State<HomeScreen> {
         future: post,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            print('Loading...');
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            print('Error: ${snapshot.error}');
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data == null) {
-            print('No data found');
             return Center(child: Text('No image found'));
           } else {
-            print('Image URL: ${snapshot.data!.imageUrl}');
-            return _widgetOptions(snapshot.data!.imageUrl)[_selectedIndex];
+            List<String> imageUrls = snapshot.data!.imageUrls;
+
+            // 이미지를 여러 개 받아서 화면에 표시
+            return _widgetOptions(imageUrls)[_selectedIndex];
           }
         },
       ),
@@ -346,94 +341,97 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 class HomeContent extends StatelessWidget {
+  final List<String> imageUrls;
 
-  final String imageUrl;
-
-  HomeContent({required this.imageUrl});
+  HomeContent({required this.imageUrls});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // 이미지 섹션
-        Image.network(
-          imageUrl,
-          width: double.infinity,
-          height: 250,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Center(
-              child: Text('Failed to load image'),
-            );
-          },
-        ),
-        SizedBox(height: 16.0),
-
-        // "반갑습니다. 구교석님" 텍스트 섹션
-        // 전체를 하나의 버튼으로 감싼 섹션
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.all(16.0),
-              backgroundColor: Colors.white, // 버튼의 배경색
-              foregroundColor: Colors.black, // 버튼 텍스트 색상
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+    return ListView.builder(
+      itemCount: imageUrls.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 각 이미지를 표시
+              Image.network(
+                imageUrls[index],
+                width: double.infinity,
+                height: 250,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Center(
+                    child: Text('Failed to load image'),
+                  );
+                },
               ),
-            ),
-            onPressed: () {
-              // 버튼 클릭 시 동작
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // "반갑습니다. 구교석님" 텍스트 섹션
-                Text(
-                  '반갑습니다. 구교석님',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8.0),
+              SizedBox(height: 16.0),
 
-                // Coupon 버튼 섹션
-                Container(
-                  padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4.0),
-                    color: Colors.grey.shade200,
-                  ),
-                  child: Text(
-                    'Coupon',
-                    style: TextStyle(
-                      fontSize: 14.0,
+              // 특정 인덱스(여기서는 두 번째 이미지) 아래에만 버튼을 표시
+              if (index == 0) ...[
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.all(16.0),
+                    backgroundColor: Colors.white, // 버튼의 배경색
+                    foregroundColor: Colors.black, // 버튼 텍스트 색상
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
-                ),
-                SizedBox(height: 8.0),
+                  onPressed: () {
+                    // 버튼 클릭 시 동작
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '반갑습니다. 구교석님',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8.0),
 
-                // "내정보 확인" 버튼 섹션
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    '내정보 확인',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      color: Colors.blue, // 텍스트 색상
-                    ),
+                      Container(
+                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(4.0),
+                          color: Colors.grey.shade200,
+                        ),
+                        child: Text(
+                          'Coupon',
+                          style: TextStyle(
+                            fontSize: 14.0,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.0),
+
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '내정보 확인',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            color: Colors.blue, // 텍스트 색상
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
+
 void main() {
   runApp(MaterialApp(
     home: HomeScreen(),
