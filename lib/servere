@@ -1,0 +1,39 @@
+//로컬 서버 테스트 확인
+from http.server import SimpleHTTPRequestHandler, HTTPServer
+import json
+
+class CustomHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/image-url':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            response = {
+                'imageUrls': [
+                    'http://10.0.2.2:8000/image.jpg',
+                    'http://10.0.2.2:8000/image2.jpg'
+                ]
+            }
+            self.wfile.write(json.dumps(response).encode())
+        else:
+            super().do_GET()
+
+httpd = HTTPServer(('localhost', 8000), CustomHandler)
+httpd.serve_forever()
+
+{
+    "product_prvateid": 3,
+    "product_id": 43,
+    "name": "Test",
+    "image": "src/main/resources/ProductImage/Test.jpg",
+    "price": 4500,
+    "explanation": "진한 에스프레소와 뜨거운 물을 섞어 스타벅스의 깔끔하고 강렬한 에스프레소를 가장 부드럽게 잘 느낄 수 있는 커피",
+    "information": {
+        "calories": 10,
+        "saturatedFat": 20,
+        "protein": 1,
+        "sodium": 5,
+        "sugar": 0,
+        "caffeine": 150
+    }
+}

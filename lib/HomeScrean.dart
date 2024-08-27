@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertest/Post.dart';
 import 'package:fluttertest/ApiService.dart';
+import 'package:fluttertest/MenuItem.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,13 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String selectedStore = "구리인창DT"; // 기본 매장
   String selectedOption = "매장 이용"; // 기본 옵션
 
-  late Future<Post?> post;
 
-  @override
-  void initState() {
-    super.initState();
-    post = ApiService().fetchImageUrls();  // 여러 개의 이미지를 받아오는 메서드로 변경
-  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -28,8 +23,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (index == 1) { // Order 탭을 클릭했을 때
       _showOrderModal(context);
+
     }
   }
+
+
 
   void _showOrderModal(BuildContext context) {
     showModalBottomSheet(
@@ -244,9 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  static List<Widget> _widgetOptions(List<String> imageUrls) => <Widget>[
-    HomeContent(imageUrls: imageUrls), // 여러 개의 이미지를 받는 HomeContent로 변경
-    Text('Index 1: Order'),
+  static List<Widget> _widgetOptions() => <Widget>[
+    HomeContent(),
+    OrderContent(),
     Text('Index 2: Other'),
   ];
 
@@ -276,161 +274,99 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<Post?>(
-        future: post,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: Text('No image found'));
-          } else {
-            List<String> imageUrls = snapshot.data!.imageUrls;
-
-            // 이미지를 여러 개 받아서 화면에 표시
-            return _widgetOptions(imageUrls)[_selectedIndex];
-          }
-        },
-      ),
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_selectedIndex == 1)
-            Container(
-              color: Colors.black87,
-              padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '구리인창DT ($selectedOption)',
-                    style: TextStyle(color: Colors.grey[400], fontWeight: FontWeight.bold),
-                  ),
-                  Icon(Icons.arrow_drop_down, color: Colors.white),
-                ],
-              ),
-              width: double.infinity,
-            ),
-          BottomNavigationBar(
-            items: [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                  icon: ImageIcon(
-                    AssetImage('android/assets/images/order.png'), // 경로 수정 필요
-                  ),
-                  label: 'Order',
-              ),
-              BottomNavigationBarItem(
-                icon: ImageIcon(
-                  AssetImage('android/assets/images/other.png'), // 경로 수정 필요
-                ),
-                label: 'Other',
-              ),
-            ],
-            currentIndex: _selectedIndex,
-            selectedItemColor: Color(0xFF5B1333),
-            onTap: _onItemTapped,
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(
+              AssetImage('android/assets/images/order.png'), // 경로 수정 필요
+            ),
+            label: 'Order',
+          ),
+          BottomNavigationBarItem(
+            icon: ImageIcon(
+              AssetImage('android/assets/images/other.png'), // 경로 수정 필요
+            ),
+            label: 'Other',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Color(0xFF5B1333),
+        onTap: _onItemTapped,
+      ),
+      body: Stack(
+        children: [
+          _widgetOptions().elementAt(_selectedIndex),
         ],
       ),
     );
   }
 }
-class HomeContent extends StatelessWidget {
-  final List<String> imageUrls;
 
-  HomeContent({required this.imageUrls});
+class HomeContent extends StatelessWidget {
+
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: imageUrls.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 각 이미지를 표시
-              Image.network(
-                imageUrls[index],
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Center(
-                    child: Text('Failed to load image'),
-                  );
-                },
-              ),
-              SizedBox(height: 16.0),
+    return ListView(
+      children: [
 
-              // 특정 인덱스(여기서는 두 번째 이미지) 아래에만 버튼을 표시
-              if (index == 0) ...[
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.all(16.0),
-                    backgroundColor: Colors.white, // 버튼의 배경색
-                    foregroundColor: Colors.black, // 버튼 텍스트 색상
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  onPressed: () {
-                    // 버튼 클릭 시 동작
-                  },
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '반갑습니다. 구교석님',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      SizedBox(height: 8.0),
-
-                      Container(
-                        padding: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4.0),
-                          color: Colors.grey.shade200,
-                        ),
-                        child: Text(
-                          'Coupon',
-                          style: TextStyle(
-                            fontSize: 14.0,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 8.0),
-
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          '내정보 확인',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            color: Colors.blue, // 텍스트 색상
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        );
-      },
+      ],
     );
   }
 }
+
+class OrderContent extends StatefulWidget {
+  @override
+  _OrderContentState createState() => _OrderContentState();
+}
+
+class _OrderContentState extends State<OrderContent> {
+  List<dynamic> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  void fetchProducts() async {
+    try {
+      var dio = Dio();
+      Response response = await dio.get(
+          'http://10.0.2.2:8080/api/product/get/all');
+      print("하이");
+      setState(() {
+        products = response.data;
+        print(products);
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Products")),
+      body: products.isEmpty
+          ? Center(child: CircularProgressIndicator())  // 로딩 중일 때 표시
+          : ListView.builder(
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(products[index]['name']),
+            subtitle: Text(products[index]['price'].toString()),
+          );
+        },
+      ),
+    );
+  }
+}
+
 
 void main() {
   runApp(MaterialApp(
