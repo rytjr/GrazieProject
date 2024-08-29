@@ -37,3 +37,55 @@ httpd.serve_forever()
         "caffeine": 150
     }
 }
+
+현재 사용하는 서버 코드
+from flask import Flask, jsonify
+import requests
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/api/product/get/all', methods=['GET'])
+def get_all_products():
+    products = [
+        {
+            "product_id": 21,
+            "name": "카페 라떼",
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "price": 5000,
+            "explanation": "풍부하고 진한 에스프레소가 신선한 스팀 밀크를 만나 부드러워진 커피",
+            "size": "tall",
+            "information": {
+                "calories": 180,
+                "saturatedFat": 5,
+                "protein": 10,
+                "sodium": 115,
+                "sugar": 13,
+                "caffeine": 75
+            },
+            "temperature": "both"
+        },
+	{
+            "product_id": 21,
+            "name": "카페 라떼",
+            "image": "http://10.0.2.2:8000/static/image2.jpg",
+            "price": 5000,
+            "explanation": "풍부하고 진한 에스프레소가 신선한 스팀 밀크를 만나 부드러워진 커피",
+            "size": "tall",
+            "information": {
+                "calories": 180,
+                "saturatedFat": 5,
+                "protein": 10,
+                "sodium": 115,
+                "sugar": 13,
+                "caffeine": 75
+            },
+            "temperature": "both"
+        },
+        # 다른 상품 데이터 추가
+    ]
+    return jsonify(products)  # 데이터를 JSON 형식으로 반환
+
+if __name__ == '__main__':
+    app.run(debug=True, port=8000)

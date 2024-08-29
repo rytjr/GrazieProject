@@ -337,7 +337,7 @@ class _OrderContentState extends State<OrderContent> {
     try {
       var dio = Dio();
       Response response = await dio.get(
-          'http://10.0.2.2:8080/api/product/get/all');
+          'http://10.0.2.2:8000/api/product/get/all');
       print("하이");
       setState(() {
         products = response.data;
@@ -351,13 +351,21 @@ class _OrderContentState extends State<OrderContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products")),
       body: products.isEmpty
           ? Center(child: CircularProgressIndicator())  // 로딩 중일 때 표시
           : ListView.builder(
         itemCount: products.length,
         itemBuilder: (context, index) {
+          print('Image URL: ${products[index]['image']}');
           return ListTile(
+            leading: Image.network(
+              products[index]['image'],
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                print('Image load error: $error'); // 오류 메시지를 출력
+                return Icon(Icons.error);
+              },
+            ),
             title: Text(products[index]['name']),
             subtitle: Text(products[index]['price'].toString()),
           );
