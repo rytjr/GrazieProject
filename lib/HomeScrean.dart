@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
-import 'package:fluttertest/Post.dart';
+import 'package:fluttertest/ProductDetailScreen.dart';
 import 'package:fluttertest/ApiService.dart';
 import 'package:fluttertest/MenuItem.dart';
 
@@ -306,15 +306,136 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
+  @override
+  _HomeContentState createState() => _HomeContentState();
+}
 
+class _HomeContentState extends State<HomeContent> {
+  List<dynamic> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  void fetchProducts() async {
+    try {
+      var dio = Dio();
+      Response response = await dio.get('http://10.0.2.2:8000/api/product/get/all');
+      setState(() {
+        products = response.data;
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-
-      ],
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Image.asset(
+              'android/assets/images/image.jpg', // 이미지 경로
+              width: double.infinity,
+              height: 230,
+              fit: BoxFit.cover,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 110,
+                child: OutlinedButton(
+                  onPressed: () {
+                    // 버튼이 눌렸을 때의 동작
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.grey),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  child: Text(
+                    "Button Text",
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: 15), // 버튼과 리스트 사이의 간격
+            SizedBox(
+              height: 130, // 제품 리스트 높이 설정
+              child: products.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: products.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Column(
+                      children: [
+                        ClipOval(
+                          child: Image.network(
+                            products[index]['image'],
+                            width: 70,
+                            height: 70,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(products[index]['name'],
+                            style: TextStyle(fontSize: 16)),
+                        Text('${products[index]['price']}원',
+                            style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(height: 23), // 리스트 사이의 간격
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),  // 패딩 설정
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Image.asset(
+                      'android/assets/images/image.jpg',
+                      width: double.infinity,
+                      height: 110,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Image.asset(
+                      'android/assets/images/image.jpg',
+                      width: double.infinity,
+                      height: 110,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Image.asset(
+                      'android/assets/images/image.jpg',
+                      width: double.infinity,
+                      height: 110,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -352,7 +473,7 @@ class _OrderContentState extends State<OrderContent> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: products.isEmpty
-          ? Center(child: CircularProgressIndicator())  // 로딩 중일 때 표시
+          ? Center(child: CircularProgressIndicator()) // 로딩 중일 때 표시
           : ListView.builder(
         itemCount: products.length,
         itemBuilder: (context, index) {
@@ -368,14 +489,23 @@ class _OrderContentState extends State<OrderContent> {
             ),
             title: Text(products[index]['name']),
             subtitle: Text(products[index]['price'].toString()),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProductDetailScreen(
+                        product: products[index],
+                      ),
+                ),
+              );
+            },
           );
         },
       ),
     );
   }
 }
-
-
 void main() {
   runApp(MaterialApp(
     home: HomeScreen(),
