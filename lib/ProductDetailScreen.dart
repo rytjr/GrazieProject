@@ -154,6 +154,7 @@ class ProductDetailScreen extends StatelessWidget {
     if (temperature == 'hot') {
       buttons.add(
         SizedBox(
+          width: double.infinity,
           height: 32,
           child: OutlinedButton(
             onPressed: () {
@@ -180,51 +181,61 @@ class ProductDetailScreen extends StatelessWidget {
 
     if (temperature == 'both') {
       buttons.add(
-        SizedBox(
-          height: 32,
-          child: OutlinedButton(
-            onPressed: () {
-              // ICE 버튼이 눌렸을 때의 동작
-            },
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.brown),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: Text(
-              "ICE",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 22.0, right: 5.0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: OutlinedButton(
+                onPressed: () {
+                  // ICE 버튼이 눌렸을 때의 동작
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.brown),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                child: Text(
+                  "ICE",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown,
+                  ),
+                ),
               ),
             ),
           ),
         ),
       );
 
-      buttons.add(SizedBox(width: 10)); // 버튼 간격
-
       buttons.add(
-        SizedBox(
-          height: 32,
-          child: OutlinedButton(
-            onPressed: () {
-              // HOT 버튼이 눌렸을 때의 동작
-            },
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.brown),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: Text(
-              "HOT",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 5.0, right: 22.0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 32,
+              child: OutlinedButton(
+                onPressed: () {
+                  // HOT 버튼이 눌렸을 때의 동작
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: Colors.brown),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                child: Text(
+                  "HOT",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.brown,
+                  ),
+                ),
               ),
             ),
           ),

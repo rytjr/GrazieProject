@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertest/ProductDetailScreen.dart';
+import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:fluttertest/ApiService.dart';
 import 'package:fluttertest/MenuItem.dart';
 
@@ -313,6 +314,7 @@ class HomeContent extends StatefulWidget {
 
 class _HomeContentState extends State<HomeContent> {
   List<dynamic> products = [];
+  bool isLoggedIn = false; // 로그인 상태를 확인하는 변수
 
   @override
   void initState() {
@@ -344,28 +346,9 @@ class _HomeContentState extends State<HomeContent> {
               height: 230,
               fit: BoxFit.cover,
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 110,
-                child: OutlinedButton(
-                  onPressed: () {
-                    // 버튼이 눌렸을 때의 동작
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.grey),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                  ),
-                  child: Text(
-                    "Button Text",
-                    style: TextStyle(fontSize: 18),
-                  ),
-                ),
-              ),
-            ),
+            isLoggedIn
+                ? _buildLoggedInUI() // 로그인 상태에 따른 UI
+                : _buildLoggedOutUI(),
             SizedBox(height: 15), // 버튼과 리스트 사이의 간격
             SizedBox(
               height: 130, // 제품 리스트 높이 설정
@@ -434,6 +417,104 @@ class _HomeContentState extends State<HomeContent> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // 로그인하지 않은 상태의 UI
+  Widget _buildLoggedOutUI() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 110,
+        child: Column(
+          children: [
+            Text(
+              "반갑습니다.",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "로그인 후 이용해 주세요.",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => TermsOfUseScreen()),
+                    );
+                  },
+                  child: Text("회원가입"),
+                ),
+                SizedBox(width: 10),
+                OutlinedButton(
+                  onPressed: () {
+                    // 로그인 버튼이 눌렸을 때의 동작
+                  },
+                  child: Text("로그인"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // 로그인한 상태의 UI
+  Widget _buildLoggedInUI() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 110,
+        child: OutlinedButton(
+          onPressed: () {
+            // "내정보 확인" 버튼이 눌렸을 때의 동작
+          },
+          style: OutlinedButton.styleFrom(
+            side: BorderSide(color: Colors.grey),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "반갑습니다. 구교석님",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    "내정보 확인",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+              Icon(Icons.arrow_forward_ios, color: Colors.grey),
+            ],
+          ),
         ),
       ),
     );

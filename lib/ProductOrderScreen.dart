@@ -11,6 +11,7 @@ class ProductOrderScreen extends StatefulWidget {
 
 class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int quantity = 1;
+  String selectedCup = "Solo"; // 기본 선택된 컵 옵션
 
   @override
   Widget build(BuildContext context) {
@@ -170,25 +171,41 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   }
 
   Widget _buildCupOption(String title, String subtitle) {
+    bool isSelected = selectedCup == title;
+
     return Expanded(
-      child: Container(
-        padding: EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            selectedCup = title;
+          });
+        },
+        child: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.brown : Colors.white,
+            border: Border.all(color: isSelected ? Colors.brown : Colors.grey),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
               ),
-            ),
-            SizedBox(height: 5),
-            Text(subtitle),
-          ],
+              SizedBox(height: 5),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
