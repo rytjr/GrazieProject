@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:fluttertest/LoginScreen.dart';
 import 'package:fluttertest/ProductDetailScreen.dart';
 import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:fluttertest/ApiService.dart';
-import 'package:fluttertest/MenuItem.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -315,17 +316,18 @@ class HomeContent extends StatefulWidget {
 class _HomeContentState extends State<HomeContent> {
   List<dynamic> products = [];
   bool isLoggedIn = false; // 로그인 상태를 확인하는 변수
+  final ApiService apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
+    // checkLoginStatus(); // 로그인 상태 확인 먼저 실행
     fetchProducts();
   }
 
   void fetchProducts() async {
     try {
-      var dio = Dio();
-      Response response = await dio.get('http://10.0.2.2:8000/api/product/get/all');
+      Response response = await apiService.getRequest('http://10.0.2.2:8000/api/product/get/all');
       setState(() {
         products = response.data;
       });
@@ -333,6 +335,42 @@ class _HomeContentState extends State<HomeContent> {
       print('Error: $e');
     }
   }
+
+  // void checkLoginStatus() async {
+  //   SecureStorageService storageService = SecureStorageService();
+  //   String? token = await storageService.getToken();
+  //
+  //   if (token != null) {
+  //     try {
+  //       Response response = await apiService.getRequest('http://10.0.2.2:8000/api/auth/check', headers: {
+  //         'Authorization': 'Bearer $token',
+  //       });
+  //
+  //       if (response.statusCode == 200) {
+  //         setState(() {
+  //           isLoggedIn = true;
+  //         });
+  //       } else {
+  //         setState(() {
+  //           isLoggedIn = false;
+  //         });
+  //         // 토큰이 유효하지 않으면 로그아웃 처리
+  //         storageService.deleteToken();
+  //       }
+  //     } catch (e) {
+  //       print('Error: $e');
+  //       setState(() {
+  //         isLoggedIn = false;
+  //       });
+  //     }
+  //   } else {
+  //     setState(() {
+  //       isLoggedIn = false;
+  //     });
+  //   }
+  // }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -462,6 +500,12 @@ class _HomeContentState extends State<HomeContent> {
                 OutlinedButton(
                   onPressed: () {
                     // 로그인 버튼이 눌렸을 때의 동작
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginScreen(),
+                      ),
+                    );
                   },
                   child: Text("로그인"),
                 ),
@@ -528,6 +572,7 @@ class OrderContent extends StatefulWidget {
 
 class _OrderContentState extends State<OrderContent> {
   List<dynamic> products = [];
+  final ApiService apiService = ApiService();
 
   @override
   void initState() {
@@ -537,13 +582,9 @@ class _OrderContentState extends State<OrderContent> {
 
   void fetchProducts() async {
     try {
-      var dio = Dio();
-      Response response = await dio.get(
-          'http://10.0.2.2:8000/api/product/get/all');
-      print("하이");
+      Response response = await apiService.getRequest('http://10.0.2.2:8000/api/product/get/all');
       setState(() {
         products = response.data;
-        print(products);
       });
     } catch (e) {
       print('Error: $e');

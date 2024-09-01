@@ -76,17 +76,23 @@ import 'package:fluttertest/MenuItem.dart';
   }
 }*/
 
+
 class ApiService {
   final Dio dio = Dio();
-  final String baseUrl = 'http://10.0.2.2:5000/api/product';
 
-  Future<List<dynamic>> fetchAllProducts() async {
+  Future<Response> getRequest(String url) async {
     try {
-      Response response = await dio.get('$baseUrl/get/all');
-      return response.data;
+      return await dio.get(url);
     } catch (e) {
-      print('Error: $e');
-      return [];
+      throw Exception('Failed to load data');
+    }
+  }
+
+  Future<Response> postRequest(String url, Map<String, dynamic> data) async {
+    try {
+      return await dio.post(url, data: data);
+    } catch (e) {
+      throw Exception('Failed to send data');
     }
   }
 }

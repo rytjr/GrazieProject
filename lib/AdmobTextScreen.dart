@@ -46,6 +46,19 @@ Grazie는 회원님께 맞춤형 광고 및 프로모션 정보를 제공하기 
               ),
             ),
             SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // 동의 버튼이 눌렸을 때의 동작
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green, // primary 대신 backgroundColor 사용
+                minimumSize: Size(double.infinity, 50),
+              ),
+              child: Text(
+                "동의",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
           ],
         ),
       ),

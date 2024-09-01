@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:fluttertest/LoginScreen.dart';
 
 class UserEmailCheckScreen extends StatefulWidget {
+  final String name;
+  final String phone;
+  final String id;
+  final String password;
+
+  UserEmailCheckScreen({
+    required this.name,
+    required this.phone,
+    required this.id,
+    required this.password,
+  });
+
   @override
   _UserEmailCheckScreenState createState() => _UserEmailCheckScreenState();
 }
@@ -62,12 +74,39 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
     }
   }
 
-  void _navigateToNextScreen() {
+  // 이메일을 API로 전송
+  void _sendEmailData() async {
     if (_isEmailValid) {
-      // Navigator.push(
-        // context,
-        // MaterialPageRoute(builder: (context) => NextScreen()),
-      // );
+      final email = _emailController.text;
+
+      try {
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:8000/api/name/get/all'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': widget.name,
+            'phone': widget.phone,
+            'id': widget.id,
+            'password': widget.password,
+            'email': email,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginScreen()),
+          );
+        } else {
+          setState(() {
+            _validationMessage = '서버에서 오류가 발생했습니다.';
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _validationMessage = '네트워크 오류가 발생했습니다.';
+        });
+      }
     }
   }
 
@@ -91,7 +130,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _validateEmail,
-              child: Text('이메일이 확인되었습니다.'),
+              child: Text('이메일 확인'),
             ),
             SizedBox(height: 20),
             Text(
@@ -104,7 +143,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isEmailValid ? _navigateToNextScreen : null,
+              onPressed: _isEmailValid ? _sendEmailData : null,
               child: Text('다음'),
             ),
           ],
