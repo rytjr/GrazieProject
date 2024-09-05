@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:fluttertest/LoginScreen.dart';
+import 'package:fluttertest/OrderListScreen.dart';
 import 'package:fluttertest/ProductDetailScreen.dart';
 import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:fluttertest/ApiService.dart';
+import 'package:fluttertest/MyPageScreen.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -247,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> _widgetOptions() => <Widget>[
     HomeContent(),
     OrderContent(),
-    Text('Index 2: Other'),
+    OtherContent(),
   ];
 
   @override
@@ -628,7 +630,135 @@ class _OrderContentState extends State<OrderContent> {
     );
   }
 }
-void main() {
+
+
+class OtherContent extends StatefulWidget {
+  @override
+  _OtherContentState createState() => _OtherContentState();
+}
+
+class _OtherContentState extends State<OtherContent> {
+  final bool isLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          "Other",
+          style: TextStyle(color: Colors.black),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Container(
+        color: Color(0xFFF2F2F2), // 배경색을 회색으로 설정
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Text(
+                "구교석님\n환영합니다!!",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildOptionButton(
+                    context, Icons.person, "마이페이지", MyPageScreen()),
+                _buildOptionButton(
+                    context, Icons.receipt_long, "주문내역", OrderListScreen()),
+                _buildOptionButton(
+                    context, Icons.card_giftcard, "쿠폰", CouponScreen()),
+              ],
+            ),
+            SizedBox(height: 20),
+            ListTile(
+              title: Text("이용약관"),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => TermsOfUseScreen()),
+                );
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text("이벤트"),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                // 이벤트 화면으로 이동
+              },
+            ),
+            Divider(),
+            ListTile(
+              title: Text("고객의 소리"),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                // 고객의 소리 화면으로 이동
+              },
+            ),
+            Spacer(),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  // 로그아웃 기능 추가 예정
+                },
+                child: Text(
+                  "로그아웃",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOptionButton(
+      BuildContext context, IconData icon, String text, Widget targetScreen) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => targetScreen),
+        );
+      },
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.white,
+            child: Icon(icon, size: 30, color: Colors.black),
+          ),
+          SizedBox(height: 8),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+  void main() {
   runApp(MaterialApp(
     home: HomeScreen(),
   ));

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/ShoppingCartScreen.dart';
 
 class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
@@ -126,7 +127,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      // 담기 버튼 눌렸을 때의 동작
+                      // 담기 버튼 눌렸을 때 모달 창 표시
+                      _showModalBottomSheet(context);
                     },
                     style: OutlinedButton.styleFrom(
                       shape: RoundedRectangleBorder(
@@ -208,6 +210,70 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // 모달 창 표시하는 함수
+  void _showModalBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 200,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '장바구니에 추가되었습니다.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // 장바구니로 이동하는 로직 추가
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ShoppingCartScreen()),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.brown),
+                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: Text('장바구니 가기'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // 다른 메뉴 더보기 로직 추가
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.brown,
+                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: Text(
+                      '다른 메뉴 더보기',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
