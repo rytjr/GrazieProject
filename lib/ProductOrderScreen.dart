@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/ShoppingCartScreen.dart';
+import 'package:fluttertest/HomeScrean.dart';
 
 class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
@@ -257,7 +258,10 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
-                      // 다른 메뉴 더보기 로직 추가
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => OrderContent()), // OrderContent로 이동
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,

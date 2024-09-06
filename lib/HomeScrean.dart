@@ -15,10 +15,31 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  String selectedStore = "구리인창DT"; // 기본 매장
-  String selectedOption = "매장 이용"; // 기본 옵션
+  List<dynamic> stores = [];
+  bool isLoading = true;
 
+  @override
+  void initState() {
+    super.initState();
+    fetchStores(); // API를 통해 매장 데이터를 불러옴
+  }
 
+  // 매장 데이터를 API로부터 가져오는 함수
+  void fetchStores() async {
+    try {
+      var dio = Dio();
+      var response = await dio.get('http://localhost:8080/api/store/get/all');
+      setState(() {
+        stores = response.data; // 받아온 매장 데이터를 리스트에 저장
+        isLoading = false;
+      });
+    } catch (e) {
+      print(e);
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -61,39 +82,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               Expanded(
-                child: ListView(
-                  children: <Widget>[
-                    _buildStoreTile(
-                      '구리인창DT',
-                      '경기도 구리시 건원대로 53 (인창동)',
-                      '579m',
-                      'android/assets/images/Grazie2.jpg',
-                    ),
-                    _buildStoreTile(
-                      '구리동대리',
-                      '경기도 구리시 경방로 5, 우진빌딩 (수택동)',
-                      '595m',
-                      'android/assets/images/order.png',
-                    ),
-                    _buildStoreTile(
-                      '다산아이파트',
-                      '경기도 남양주시 도농로 24 (다산동, 북양마을)',
-                      '1.2km',
-                      'android/assets/images/order.png',
-                    ),
-                    _buildStoreTile(
-                      '다산DT',
-                      '경기도 남양주시 다산중앙로 19번길 5 (다산동)',
-                      '1.4km',
-                      'android/assets/images/order.png',
-                    ),
-                    _buildStoreTile(
-                      '도농역',
-                      '경기도 남양주시 다산길 230 (다산동)',
-                      '1.4km',
-                      'android/assets/images/order.png',
-                    ),
-                  ],
+                child: isLoading
+                    ? Center(child: CircularProgressIndicator()) // 로딩 중일 때
+                    : ListView.builder(
+                  itemCount: stores.length,
+                  itemBuilder: (context, index) {
+                    return _buildStoreTile(
+                      stores[index]['name'],
+                      stores[index]['location'],
+                      '거리 정보 없음', // 거리 정보가 없다면 임의의 값
+                      'assets/images/store_image.jpg', // 매장 이미지
+                      stores[index], // 매장 전체 정보
+                    );
+                  },
                 ),
               ),
             ],
@@ -173,9 +174,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget pickupButton(BuildContext context, IconData icon, String text) {
     return GestureDetector(
       onTap: () {
-        // 모든 열려 있는 모달을 닫고 Order 페이지로 이동
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushReplacementNamed(context, '/order'); // '/order'는 Order 페이지로 이동하기 위한 라우트
+        Navigator.pushReplacementNamed(context, '/order');
       },
       child: Container(
         width: 80,
@@ -198,15 +198,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 
-  Widget _buildStoreTile(String title, String subtitle, String distance, String imagePath) {
+  Widget _buildStoreTile(String title, String subtitle, String distance, String imagePath, dynamic store) {
     return GestureDetector(
       onTap: () => showStoreDetailsModal(
           context,
           title,
           subtitle,
           imagePath,
-          "운영 시간: 07:00 - 21:30",
-          "24시간 운영 주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다."
+          "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
+          "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다." // 추가 정보 임시 설정
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0),
@@ -639,6 +639,7 @@ class OtherContent extends StatefulWidget {
 
 class _OtherContentState extends State<OtherContent> {
   final bool isLoading = false;
+  final SecureStorageService _storageService = SecureStorageService(); // SecureStorageService 인스턴스 생성
 
   @override
   Widget build(BuildContext context) {
@@ -713,8 +714,15 @@ class _OtherContentState extends State<OtherContent> {
             Spacer(),
             Center(
               child: TextButton(
-                onPressed: () {
-                  // 로그아웃 기능 추가 예정
+                onPressed: () async {
+                  // 로그아웃 시 토큰 삭제
+                  await _logout();
+                  // 로그아웃 후 HomeContent로 이동
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeContent()),
+                        (route) => false,
+                  );
                 },
                 child: Text(
                   "로그아웃",
@@ -756,8 +764,17 @@ class _OtherContentState extends State<OtherContent> {
       ),
     );
   }
-}
 
+  Future<void> _logout() async {
+    try {
+      // SecureStorageService를 사용하여 저장된 인증 토큰 삭제
+      await _storageService.deleteToken();
+      print('로그아웃 성공');
+    } catch (e) {
+      print('로그아웃 실패: $e');
+    }
+  }
+}
   void main() {
   runApp(MaterialApp(
     home: HomeScreen(),
