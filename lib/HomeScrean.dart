@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void fetchStores() async {
     try {
       var dio = Dio();
-      var response = await dio.get('http://localhost:8080/api/store/get/all');
+      var response = await dio.get('http://10.0.2.2:8000/api/store/get/all');
       setState(() {
         stores = response.data; // 받아온 매장 데이터를 리스트에 저장
         isLoading = false;
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       stores[index]['name'],
                       stores[index]['location'],
                       '거리 정보 없음', // 거리 정보가 없다면 임의의 값
-                      'assets/images/store_image.jpg', // 매장 이미지
+                      stores[index]['image'],
                       stores[index], // 매장 전체 정보
                     );
                   },
@@ -103,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-
 
   void showStoreDetailsModal(BuildContext context, String title, String address, String imagePath, String operatingHours, String additionalInfo) {
     showModalBottomSheet(
@@ -134,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     SizedBox(height: 10),
-                    Image.asset(imagePath, width: MediaQuery.of(context).size.width, height: 200, fit: BoxFit.cover),
+                    Image.network(imagePath, width: MediaQuery.of(context).size.width, height: 200, fit: BoxFit.cover),  // 여기 수정
                     SizedBox(height: 20),
                     Text(title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     Text(address, style: TextStyle(fontSize: 18, color: Colors.grey[800])),
@@ -175,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () {
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushReplacementNamed(context, '/order');
+        Navigator.pushReplacementNamed(context, '/order');  // 여기가 등록된 라우트가 있는지 확인 필요
       },
       child: Container(
         width: 80,
@@ -197,7 +196,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   Widget _buildStoreTile(String title, String subtitle, String distance, String imagePath, dynamic store) {
     return GestureDetector(
       onTap: () => showStoreDetailsModal(
@@ -218,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset(imagePath, width: 90, height: 90, fit: BoxFit.cover),
+                child: Image.network(imagePath, width: 90, height: 90, fit: BoxFit.cover),  // 이미지 경로를 네트워크에서 가져옴
               ),
               Expanded(
                 child: Padding(
@@ -244,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 
 
   static List<Widget> _widgetOptions() => <Widget>[
