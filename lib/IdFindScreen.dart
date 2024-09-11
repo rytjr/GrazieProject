@@ -18,31 +18,48 @@ class IdFindScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '본인 확인을 위해 인증을 진행해 주세요.',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 30),
+            // 이름 입력 필드
             TextField(
               decoration: InputDecoration(
                 labelText: '이름 입력',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
               ),
             ),
             SizedBox(height: 20),
+            // 법적 생년월일 입력 필드
             TextField(
               decoration: InputDecoration(
                 labelText: '법적생년월일 8자리',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.grey),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
               ),
             ),
             SizedBox(height: 20),
+            // 전화번호 입력 필드
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 패딩을 통해 높이 맞춤
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
                     ),
                     value: '010',
                     items: ['010', '011', '016', '019']
@@ -56,36 +73,56 @@ class IdFindScreen extends StatelessWidget {
                 ),
                 SizedBox(width: 10),
                 Expanded(
+                  flex: 4,
                   child: TextField(
                     decoration: InputDecoration(
                       labelText: '번호입력',
-                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 동일한 패딩 적용
+                      labelStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(width: 10),
                 Expanded(
+                  flex: 4,
                   child: TextField(
                     decoration: InputDecoration(
                       labelText: '번호입력',
-                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 동일한 패딩 적용
+                      labelStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.black),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             SizedBox(height: 30),
-            ElevatedButton(
-              onPressed: () {
-                // 아이디 찾기 버튼 동작
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: Text(
-                '아이디 찾기',
-                style: TextStyle(color: Colors.white, fontSize: 18),
+            // 아이디 찾기 버튼
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  // 아이디 찾기 버튼 동작
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                ),
+                child: Text(
+                  '아이디 찾기',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
             ),
           ],
@@ -94,3 +131,7 @@ class IdFindScreen extends StatelessWidget {
     );
   }
 }
+
+void main() => runApp(MaterialApp(
+  home: IdFindScreen(),
+));
