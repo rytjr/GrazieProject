@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/CouponScreen.dart';
 
 import 'package:fluttertest/NicknameScreen.dart';
+import 'package:fluttertest/UserInfoChangeScreen.dart';
 
 class MyPageScreen extends StatelessWidget {
   @override
@@ -45,7 +47,7 @@ class MyPageScreen extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EditMemberInfoScreen()), // 회원정보 수정 화면으로 이동
+                  MaterialPageRoute(builder: (context) => UserInfoChangeScreen()), // 회원정보 수정 화면으로 이동
                 );
               },
             ),
@@ -62,35 +64,6 @@ class MyPageScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-
-class EditMemberInfoScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('회원정보 수정'),
-      ),
-      body: Center(
-        child: Text('회원정보 수정 화면'),
-      ),
-    );
-  }
-}
-
-class CouponScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('쿠폰'),
-      ),
-      body: Center(
-        child: Text('쿠폰 화면'),
       ),
     );
   }

@@ -7,6 +7,8 @@ import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:fluttertest/ApiService.dart';
 import 'package:fluttertest/MyPageScreen.dart';
 import 'package:fluttertest/SecureStorageService.dart';
+import 'package:fluttertest/TermsScreen.dart';
+import 'package:fluttertest/CouponScreen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -328,7 +330,7 @@ class _HomeContentState extends State<HomeContent> {
 
   void fetchProducts() async {
     try {
-      Response response = await apiService.getRequest('http://10.0.2.2:8000/api/product/get/all');
+      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
       });
@@ -583,7 +585,7 @@ class _OrderContentState extends State<OrderContent> {
 
   void fetchProducts() async {
     try {
-      Response response = await apiService.getRequest('http://10.0.2.2:8000/api/product/get/all');
+      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
       });
@@ -690,7 +692,7 @@ class _OtherContentState extends State<OtherContent> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TermsOfUseScreen()),
+                  MaterialPageRoute(builder: (context) => TermsScreen()),
                 );
               },
             ),

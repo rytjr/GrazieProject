@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
 
-class NicknameScreen extends StatelessWidget {
+class NicknameScreen extends StatefulWidget {
+  @override
+  _NicknameScreenState createState() => _NicknameScreenState();
+}
+
+class _NicknameScreenState extends State<NicknameScreen> {
   final TextEditingController _nicknameController = TextEditingController();
+  bool _isButtonEnabled = false;
+
+  // 닉네임 입력 제한 (한글, 영어, 10자 이하)
+  void _validateNickname(String nickname) {
+    final RegExp nicknameRegExp = RegExp(r'^[a-zA-Z가-힣]{1,10}$'); // 한글 또는 영어, 최대 10자
+    setState(() {
+      _isButtonEnabled = nicknameRegExp.hasMatch(nickname);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +43,7 @@ class NicknameScreen extends StatelessWidget {
             ),
             SizedBox(height: 10),
             Text(
-              '닉네임은 한글로 최대 6자까지 입력 가능하며, 주문하실 메뉴를 찾으실 때 등록된 닉네임을 불러 드립니다.',
+              '닉네임은 한글 또는 영어로 최대 10자까지 입력 가능합니다.',
               style: TextStyle(color: Colors.grey),
             ),
             SizedBox(height: 30),
@@ -37,22 +51,32 @@ class NicknameScreen extends StatelessWidget {
               controller: _nicknameController,
               decoration: InputDecoration(
                 labelText: '닉네임 입력',
-                border: OutlineInputBorder(),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: Colors.black),
+                ),
               ),
+              maxLength: 10,
+              onChanged: _validateNickname, // 입력할 때마다 닉네임 유효성 검사
             ),
             Spacer(),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // 여기에 닉네임을 저장하는 로직을 추가
+                onPressed: _isButtonEnabled
+                    ? () {
                   if (_nicknameController.text.isNotEmpty) {
+                    // 닉네임 저장 로직 추가
                     Navigator.pop(context); // 저장 후 이전 화면으로 이동
                   }
-                },
+                }
+                    : null, // 입력이 완료되지 않으면 버튼 비활성화
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple, // 버튼 색상
                   padding: EdgeInsets.symmetric(vertical: 16),
+                  disabledBackgroundColor: Colors.grey[300], // 비활성화 시 색상
                 ),
                 child: Text(
                   '확인',
