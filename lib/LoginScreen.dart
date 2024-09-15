@@ -1,10 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertest/IdFindScreen.dart';
-import 'package:fluttertest/PasswordChangeScreen.dart';
-import 'package:fluttertest/PasswordFindScreen.dart';
-import 'package:fluttertest/TermsOfUseScreen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:fluttertest/HomeScrean.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final _storage = FlutterSecureStorage();
+
+  Future<void> _login() async {
+    final String id = _idController.text;
+    final String password = _passwordController.text;
+
+    // API로 로그인 요청
+    final response = await http.post(
+      Uri.parse('http://localhost:8080/auth/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'id': id, 'password': password}),
+    );
+
+    final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+    if (responseData.isEmpty) {
+      // 로그인 실패 - 빈 배열이면 모달창을 띄움
+      _showErrorModal();
+    } else {
+      // 로그인 성공 - 토큰 저장 후 HomeScreen으로 이동
+      await _saveTokens(responseData['accessToken'], responseData['refreshToken']);
+      print("Access Token: ${responseData['accessToken']}");
+      print("Refresh Token: ${responseData['refreshToken']}");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(), // 로그인 상태를 true로 넘김
+        ),
+      );
+    }
+  }
+
+  // SecureStorage에 토큰 저장
+  Future<void> _saveTokens(String accessToken, String refreshToken) async {
+    await _storage.write(key: 'accessToken', value: accessToken);
+    await _storage.write(key: 'refreshToken', value: refreshToken);
+  }
+
+  // 로그인 실패 시 모달창 띄우기
+  void _showErrorModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('로그인 오류'),
+          content: Text('아이디 혹은 비밀번호를 잘못 입력하셨습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -12,7 +78,7 @@ class LoginScreen extends StatelessWidget {
         title: Text('로그인'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView( // 여기 추가
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -29,12 +95,14 @@ class LoginScreen extends StatelessWidget {
               ),
               SizedBox(height: 40),
               TextField(
+                controller: _idController,
                 decoration: InputDecoration(
                   labelText: '아이디 입력',
                 ),
               ),
               SizedBox(height: 20),
               TextField(
+                controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: '비밀번호 입력',
                   suffixIcon: Icon(Icons.visibility_off),
@@ -46,9 +114,7 @@ class LoginScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // 로그인 버튼 눌렸을 때 동작
-                  },
+                  onPressed: _login, // 로그인 버튼 눌렀을 때 API 요청
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.black,
                   ),
@@ -62,12 +128,6 @@ class LoginScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () {
                       // 아이디 찾기 동작
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => IdFindScreen(),
-                        ),
-                      );
                     },
                     child: Text('아이디 찾기'),
                   ),
@@ -75,12 +135,6 @@ class LoginScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () {
                       // 비밀번호 찾기 동작
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PasswordFindScreen(),
-                        ),
-                      );
                     },
                     child: Text('비밀번호 찾기'),
                   ),
@@ -88,12 +142,6 @@ class LoginScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () {
                       // 비밀번호 변경 동작
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PasswordChangeScreen(),
-                        ),
-                      );
                     },
                     child: Text('비밀번호 변경'),
                   ),
@@ -112,12 +160,7 @@ class LoginScreen extends StatelessWidget {
                     SizedBox(height: 10),
                     OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => TermsOfUseScreen(),
-                          ),
-                        );
+                        // 회원가입 화면으로 이동
                       },
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.black),

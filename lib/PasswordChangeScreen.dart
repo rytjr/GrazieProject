@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class PasswordChangeScreen extends StatefulWidget {
   @override
@@ -6,6 +8,7 @@ class PasswordChangeScreen extends StatefulWidget {
 }
 
 class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
+  TextEditingController _currentPasswordController = TextEditingController();
   TextEditingController _newPasswordController = TextEditingController();
   TextEditingController _confirmPasswordController = TextEditingController();
   String _errorMessage = '';
@@ -21,6 +24,53 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
     });
   }
 
+  // 비밀번호 변경 요청 함수
+  Future<void> _changePassword() async {
+    final String currentPassword = _currentPasswordController.text;
+    final String newPassword = _newPasswordController.text;
+
+    final response = await http.post(
+      Uri.parse('http://localhost:8080/users/changePassword'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // 비밀번호 변경 성공 모달 띄우기
+      _showResultModal('비밀번호가 변경되었습니다.', true);
+    } else {
+      // 비밀번호 변경 실패 모달 띄우기
+      _showResultModal('현재 비밀번호를 확인해 주세요.', false);
+    }
+  }
+
+  // 결과 모달 창 표시
+  void _showResultModal(String message, bool isSuccess) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('알림'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (isSuccess) {
+                  Navigator.pop(context); // 성공 시 화면을 닫음
+                }
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,6 +84,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
+              controller: _currentPasswordController,
               decoration: InputDecoration(
                 labelText: '현재 비밀번호',
               ),
@@ -70,11 +121,9 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  // 확인 버튼 눌렀을 때의 동작 (비밀번호가 일치하면 통신 준비)
-                  if (_newPasswordController.text ==
-                      _confirmPasswordController.text) {
-                    // 비밀번호가 일치할 때만 통신 실행
-                    print('비밀번호 변경 통신 실행');
+                  // 확인 버튼 눌렀을 때의 동작 (비밀번호가 일치하면 통신 실행)
+                  if (_newPasswordController.text == _confirmPasswordController.text) {
+                    _changePassword();
                   }
                 },
                 style: ElevatedButton.styleFrom(
