@@ -19,22 +19,10 @@ class _UserInScreenState extends State<UserInScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.arrow_back), // 뒤로가기 아이콘으로 변경
           onPressed: () {
-            // 닫기 버튼 동작
+            Navigator.pop(context); // 뒤로가기 동작
           },
-        ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildStepCircle(1, true),
-            _buildStepLine(),
-            _buildStepCircle(2, true),
-            _buildStepLine(),
-            _buildStepCircle(3, false),
-            _buildStepLine(),
-            _buildStepCircle(4, false),
-          ],
         ),
         centerTitle: true,
       ),

@@ -24,9 +24,9 @@ class _TermsOfUseScreenState extends State<TermsOfUseScreen> {
       appBar: AppBar(
         title: Text("약관 동의"),
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.arrow_back), // 뒤로가기 아이콘으로 변경
           onPressed: () {
-            // 닫기 버튼 동작
+            Navigator.pop(context); // 뒤로가기 동작
           },
         ),
       ),
@@ -140,8 +140,8 @@ class _TermsOfUseScreenState extends State<TermsOfUseScreen> {
   void _onNextPressed() {
     // 다음 버튼 눌렸을 때의 동작
     Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => UserInScreen()),
+      context,
+      MaterialPageRoute(builder: (context) => UserInScreen()),
     );
   }
 }

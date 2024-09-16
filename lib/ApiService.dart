@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-
+import 'package:dio/dio.dart';  // Dio 패키지 import
 import 'package:fluttertest/Post.dart';
 import 'package:fluttertest/MenuItem.dart';
 
@@ -77,25 +77,28 @@ import 'package:fluttertest/MenuItem.dart';
 }*/
 
 
-class ApiService {
-  final Dio dio = Dio();
+import 'package:dio/dio.dart' as dio;
 
-  Future<Response> getRequest(String url) async {
+class ApiService {
+  final dio.Dio dioInstance = dio.Dio();
+
+  Future<dio.Response> getRequest(String url, {Map<String, dynamic>? headers}) async {
     try {
-      return await dio.get(url);
+      return await dioInstance.get(url, options: dio.Options(headers: headers));
     } catch (e) {
       throw Exception('Failed to load data');
     }
   }
 
-  Future<Response> postRequest(String url, Map<String, dynamic> data) async {
+  Future<dio.Response> postRequest(String url, Map<String, dynamic> data, {Map<String, dynamic>? headers}) async {
     try {
-      return await dio.post(url, data: data);
+      return await dioInstance.post(url, data: data, options: dio.Options(headers: headers));
     } catch (e) {
       throw Exception('Failed to send data');
     }
   }
 }
+
 
 
 

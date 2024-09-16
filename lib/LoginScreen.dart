@@ -13,34 +13,44 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final _storage = FlutterSecureStorage();
+  bool _obscureText = true; // 비밀번호 가시성 토글 상태
 
   Future<void> _login() async {
     final String id = _idController.text;
     final String password = _passwordController.text;
 
+    // 입력값이 없을 때 경고 메시지 표시
+    if (id.isEmpty || password.isEmpty) {
+      _showErrorModal('아이디와 비밀번호를 입력해 주세요.');
+      return;
+    }
+
     // API로 로그인 요청
     final response = await http.post(
-      Uri.parse('http://localhost:8080/auth/login'),
+      Uri.parse('http://10.0.2.2:8000/auth/login'), // localhost 대신 에뮬레이터용 IP 사용
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id': id, 'password': password}),
+      body: jsonEncode({'userid': id, 'password': password}), // 서버에서 기대하는 키 이름 확인
     );
 
-    final Map<String, dynamic> responseData = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
 
-    if (responseData.isEmpty) {
-      // 로그인 실패 - 빈 배열이면 모달창을 띄움
-      _showErrorModal();
+      if (responseData.isEmpty) {
+        // 로그인 실패 - 빈 배열이면 모달창을 띄움
+        _showErrorModal('아이디 혹은 비밀번호를 잘못 입력하셨습니다.');
+      } else {
+        // 로그인 성공 - 토큰 저장 후 HomeScreen으로 이동
+        await _saveTokens(responseData['accessToken'], responseData['refreshToken']);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(),
+          ),
+        );
+      }
     } else {
-      // 로그인 성공 - 토큰 저장 후 HomeScreen으로 이동
-      await _saveTokens(responseData['accessToken'], responseData['refreshToken']);
-      print("Access Token: ${responseData['accessToken']}");
-      print("Refresh Token: ${responseData['refreshToken']}");
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(), // 로그인 상태를 true로 넘김
-        ),
-      );
+      // 로그인 실패 시 모달창 띄우기
+      _showErrorModal('로그인에 실패했습니다. 다시 시도해 주세요.');
     }
   }
 
@@ -51,13 +61,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // 로그인 실패 시 모달창 띄우기
-  void _showErrorModal() {
+  void _showErrorModal(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('로그인 오류'),
-          content: Text('아이디 혹은 비밀번호를 잘못 입력하셨습니다.'),
+          content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
@@ -105,9 +115,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 decoration: InputDecoration(
                   labelText: '비밀번호 입력',
-                  suffixIcon: Icon(Icons.visibility_off),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscureText ? Icons.visibility_off : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscureText = !_obscureText;
+                      });
+                    },
+                  ),
                 ),
-                obscureText: true,
+                obscureText: _obscureText, // 비밀번호 가시성 설정
               ),
               SizedBox(height: 40),
               SizedBox(

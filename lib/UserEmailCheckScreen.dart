@@ -81,15 +81,16 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8000/api/name/get/all'),
+          Uri.parse('http://10.0.2.2:8000/users/join'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
-            'name': widget.name,
-            'phone': widget.phone,
-            'id': widget.id,
+            'userId': widget.id,  // 여기서 'id'를 'userId'로 변경
             'password': widget.password,
             'email': email,
+            'name': widget.name,
+            'phone': widget.phone,
           }),
+
         );
 
         if (response.statusCode == 200) {

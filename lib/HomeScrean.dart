@@ -324,7 +324,7 @@ class _HomeContentState extends State<HomeContent> {
   @override
   void initState() {
     super.initState();
-    // checkLoginStatus(); // 로그인 상태 확인 먼저 실행
+    checkLoginStatus(); // 로그인 상태 확인 먼저 실행
     fetchProducts();
   }
 
@@ -339,40 +339,43 @@ class _HomeContentState extends State<HomeContent> {
     }
   }
 
-  // void checkLoginStatus() async {
-  //   SecureStorageService storageService = SecureStorageService();
-  //   String? token = await storageService.getToken();
-  //
-  //   if (token != null) {
-  //     try {
-  //       Response response = await apiService.getRequest('http://10.0.2.2:8000/api/auth/check', headers: {
-  //         'Authorization': 'Bearer $token',
-  //       });
-  //
-  //       if (response.statusCode == 200) {
-  //         setState(() {
-  //           isLoggedIn = true;
-  //         });
-  //       } else {
-  //         setState(() {
-  //           isLoggedIn = false;
-  //         });
-  //         // 토큰이 유효하지 않으면 로그아웃 처리
-  //         storageService.deleteToken();
-  //       }
-  //     } catch (e) {
-  //       print('Error: $e');
-  //       setState(() {
-  //         isLoggedIn = false;
-  //       });
-  //     }
-  //   } else {
-  //     setState(() {
-  //       isLoggedIn = false;
-  //     });
-  //   }
-  // }
+  void checkLoginStatus() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
 
+    if (token != null) {
+      try {
+        // dio.Response로 변경하여 Dio 패키지를 활용한 getRequest 호출
+        Response response = await apiService.getRequest(
+          'http://10.0.2.2:8000/api/auth/check',
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          setState(() {
+            isLoggedIn = true;
+          });
+        } else {
+          setState(() {
+            isLoggedIn = false;
+          });
+          // 토큰이 유효하지 않으면 로그아웃 처리
+          storageService.deleteToken();
+        }
+      } catch (e) {
+        print('Error: $e');
+        setState(() {
+          isLoggedIn = false;
+        });
+      }
+    } else {
+      setState(() {
+        isLoggedIn = false;
+      });
+    }
+  }
 
 
   @override
