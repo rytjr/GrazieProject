@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void fetchStores() async {
     try {
       var dio = Dio();
-      var response = await dio.get('http://10.0.2.2:8000/api/store/get/all');
+      var response = await dio.get('http://34.64.110.210:8080/api/store/get/all');
       setState(() {
         stores = response.data; // 받아온 매장 데이터를 리스트에 저장
         isLoading = false;
@@ -198,13 +198,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStoreTile(String title, String subtitle, String distance, String imagePath, dynamic store) {
+  Widget _buildStoreTile(String? title, String? subtitle, String distance, String? imagePath, dynamic store) {
     return GestureDetector(
       onTap: () => showStoreDetailsModal(
           context,
-          title,
-          subtitle,
-          imagePath,
+          title ?? '매장 이름 없음', // null일 때 기본값 제공
+          subtitle ?? '매장 주소 없음', // null일 때 기본값 제공
+          imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
           "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
           "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다." // 추가 정보 임시 설정
       ),
@@ -218,7 +218,9 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
-                child: Image.network(imagePath, width: 90, height: 90, fit: BoxFit.cover),  // 이미지 경로를 네트워크에서 가져옴
+                child: imagePath != null && imagePath.isNotEmpty
+                    ? Image.network(imagePath, width: 90, height: 90, fit: BoxFit.cover)
+                    : Image.network('https://example.com/default-image.jpg', width: 90, height: 90, fit: BoxFit.cover), // 기본 이미지 경로 제공
               ),
               Expanded(
                 child: Padding(
@@ -227,8 +229,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(title ?? '매장 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(subtitle ?? '매장 주소 없음', style: TextStyle(fontSize: 12, color: Colors.grey)),
                       Spacer(),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -244,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 
 
 

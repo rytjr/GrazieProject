@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/PaymentScreen.dart';
 import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'package:fluttertest/HomeScrean.dart';
 
@@ -149,6 +150,10 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       // 주문하기 버튼 눌렸을 때의 동작
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => PaymentScreen()), // OrderContent로 이동
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,
