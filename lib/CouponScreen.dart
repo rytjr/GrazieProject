@@ -19,7 +19,8 @@ class _CouponScreenState extends State<CouponScreen> {
 
   // 서버에서 쿠폰 데이터를 받아오는 함수
   void fetchCoupons() async {
-    final response = await http.get(Uri.parse('http://localhost:8080/api/coupons'));
+    // 서버의 URL을 정확하게 입력합니다.
+    final response = await http.get(Uri.parse('http://10.0.2.2:8000/discount-coupons/read/13'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -27,6 +28,9 @@ class _CouponScreenState extends State<CouponScreen> {
         isLoading = false;
       });
     } else {
+      setState(() {
+        isLoading = false;
+      });
       throw Exception('Failed to load coupons');
     }
   }
@@ -89,7 +93,7 @@ class CouponCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${coupon['discount']}% 할인',
+              '${coupon['discountRate']}% 할인', // 서버의 discountRate 사용
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
@@ -99,7 +103,7 @@ class CouponCard extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              '기간 ${coupon['expiry']}', // 기간 정보
+              '기간 ${coupon['expirationDate']}', // 서버의 expirationDate 사용
               style: TextStyle(fontSize: 14, color: Colors.red),
             ),
             Align(
