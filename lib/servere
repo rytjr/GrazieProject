@@ -1,50 +1,84 @@
-//로컬 서버 테스트 확인
-from http.server import SimpleHTTPRequestHandler, HTTPServer
-import json
-
-class CustomHandler(SimpleHTTPRequestHandler):
-    def do_GET(self):
-        if self.path == '/image-url':
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            response = {
-                'imageUrls': [
-                    'http://10.0.2.2:8000/image.jpg',
-                    'http://10.0.2.2:8000/image2.jpg'
-                ]
-            }
-            self.wfile.write(json.dumps(response).encode())
-        else:
-            super().do_GET()
-
-httpd = HTTPServer(('localhost', 8000), CustomHandler)
-httpd.serve_forever()
-
-{
-    "product_prvateid": 3,
-    "product_id": 43,
-    "name": "Test",
-    "image": "src/main/resources/ProductImage/Test.jpg",
-    "price": 4500,
-    "explanation": "진한 에스프레소와 뜨거운 물을 섞어 스타벅스의 깔끔하고 강렬한 에스프레소를 가장 부드럽게 잘 느낄 수 있는 커피",
-    "information": {
-        "calories": 10,
-        "saturatedFat": 20,
-        "protein": 1,
-        "sodium": 5,
-        "sugar": 0,
-        "caffeine": 150
-    }
-}
-
-현재 사용하는 서버 코드
 from flask import Flask, jsonify
+import jwt  # PyJWT 라이브러리를 가져옵니다
+import datetime
+from flask import Flask, jsonify, request  # request를 명시적으로 추가
 import requests
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)
+
+# 시크릿 키 설정 (토큰 생성 시 사용할 키)
+SECRET_KEY = 'your_secret_key'
+
+@app.route('/auth/login', methods=['POST'])
+def login():
+    # 클라이언트로부터 받은 데이터
+    data = request.get_json()
+    userid = data.get('userid')
+    password = data.get('password')
+
+    # 유효성 검사 (간단한 예시로 하드코딩된 유저 데이터와 비교)
+    if userid == 'test1234' and password == '1234':
+        # 액세스 토큰 생성 (만료 시간 설정)
+        access_token = jwt.encode({
+            'sub': userid,
+            'iat': datetime.datetime.utcnow(),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        }, SECRET_KEY, algorithm='HS256')
+
+        # 리프레시 토큰 생성 (만료 시간 더 길게 설정)
+        refresh_token = jwt.encode({
+            'sub': userid,
+            'iat': datetime.datetime.utcnow(),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7)
+        }, SECRET_KEY, algorithm='HS256')
+
+        # JSON 응답
+        return jsonify({
+            'accessToken': access_token,
+            'refreshToken': refresh_token
+        }), 200
+    else:
+        # 로그인 실패
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+users = []
+
+@app.route('/users/join', methods=['POST'])
+def join_user():
+    try:
+        # 요청 데이터에서 사용자 정보를 받음
+        data = request.get_json()
+
+        # 요청에 필수 값이 존재하는지 확인
+        if not all(key in data for key in ("userId", "password", "email", "name", "phone")):
+            return jsonify({"error": "필수 정보가 누락되었습니다."}), 400
+
+        # 이미 존재하는 userId인지 확인
+        for user in users:
+            if user["userId"] == data["userId"]:
+                return jsonify({"error": "이미 존재하는 사용자입니다."}), 409  # Conflict 에러
+
+        # 새 사용자 데이터를 저장
+        new_user = {
+            "userId": data["userId"],
+            "password": data["password"],
+            "email": data["email"],
+            "name": data["name"],
+            "phone": data["phone"]
+        }
+
+        # 사용자 리스트에 추가
+        users.append(new_user)
+
+        # 성공적으로 처리되면 200 OK 응답 반환
+        return jsonify({"message": "사용자 등록이 완료되었습니다."}), 200
+
+    except Exception as e:
+        # 서버에서 발생한 에러 처리
+        return jsonify({"error": f"서버 오류가 발생했습니다: {str(e)}"}), 500
+
 
 @app.route('/api/product/get/all', methods=['GET'])
 def get_all_products():
@@ -64,10 +98,10 @@ def get_all_products():
                 "sugar": 13,
                 "caffeine": 75
             },
-            "temperature": "both"
+            "temperature": "ice"
         },
-	{
-            "product_id": 21,
+        {
+            "product_id": 22,
             "name": "카페 라떼",
             "image": "http://10.0.2.2:8000/static/image2.jpg",
             "price": 5000,
@@ -86,6 +120,357 @@ def get_all_products():
         # 다른 상품 데이터 추가
     ]
     return jsonify(products)  # 데이터를 JSON 형식으로 반환
+
+@app.route('/cart/items', methods=['GET'])
+def get_all_carts():
+    user_id = request.args.get('userId')
+    if user_id == '2':
+        carts = [
+            {
+                "productId": 5,
+                "quantity": 6,
+                "price": 1500,
+                "temperature": "large",
+                "size": "cold",
+                "cup": "일회용",
+                "image": "http://10.0.2.2:8000/static/image2.jpg",
+            },
+            {
+                "productId": 5,
+                "quantity": 3,
+                "price": 2100,
+                "temperature": "large",
+                "size": "cold",
+                "cup": "일회용",
+                "image": "http://10.0.2.2:8000/static/image2.jpg",
+            }
+        ]
+        return jsonify(carts)
+    else:
+        return jsonify([]), 404  # 해당 userId가 없을 경우 404 반환
+
+@app.route('/discount-coupons/read/13', methods=['GET'])  # 잘못된 인용부호 수정
+def get_all_cupon():
+    cupon = [
+        {
+            "id": 13,
+            "couponName": "Test Discount Coupon",
+            "description": "This is a test discount coupon.",
+            "expirationDate": "2024-12-31",
+            "issueDate": "2024-01-01",
+            "discountRate": 15,
+            "productId": 2
+        },
+        {
+            "id": 14,
+            "couponName": "Test Discount Coupon",
+            "description": "This is a test discount coupon.",
+            "expirationDate": "2024-12-31",
+            "issueDate": "2024-01-01",
+            "discountRate": 15,
+            "productId": 2
+        }
+    ]
+    return jsonify(cupon)  # 데이터를 JSON 형식으로 반환
+
+@app.route('/api/store/get/all', methods=['GET'])
+def get_all_stores():
+    stores = [
+        {
+            "store_id": 1,
+            "name": "GRAZIE 대진대학교 1호점",
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "tel_num": None,  # null -> None
+            "state": True,
+            "location": "경기도 포천시 선단동 249",
+            "road_way": "대진대학교 학생회관 1층 야외매장",
+            "parking": True,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Monday": None,  # null -> None
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Saturday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Thursday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    }
+                },
+                "holidays": {
+                    "NewYear": None,  # null -> None
+                    "Christmas": None  # null -> None
+                }
+            }
+        },
+        {
+            "store_id": 2,
+            "name": "GRAZIE 대진대학교 2호점",
+            "tel_num": None,  # null -> None
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "state": True,
+            "location": "경기도 포천시 선단동 249",
+            "road_way": "대진대학교 학생회관 CU옆",
+            "parking": True,
+            "operatingHours": {
+                "days": {
+                    "Friday": None,  # null -> None
+                    "Monday": None,  # null -> None
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "10:00:00",
+                        "close": "14:00:00"
+                    },
+                    "Saturday": None,  # null -> None
+                    "Thursday": {
+                        "open": "10:00:00",
+                        "close": "14:00:00"
+                    },
+                    "Wednesday": None  # null -> None
+                },
+                "holidays": None  # null -> None
+            }
+        },
+        {
+            "store_id": 3,
+            "name": "GRAZIE 대진대학교 3호점",
+            "tel_num": None,  # null -> None
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "state": True,
+            "location": "경기도 포천시 선단동 산 11-1",
+            "road_way": "대진대학교 중앙 도서관 1층",
+            "parking": True,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "08:00:00",
+                        "close": "20:00:00"
+                    },
+                    "Monday": {
+                        "open": "08:00:00",
+                        "close": "20:00:00"
+                    },
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "08:00:00",
+                        "close": "20:00:00"
+                    },
+                    "Saturday": None,  # null -> None
+                    "Thursday": {
+                        "open": "08:00:00",
+                        "close": "20:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "08:00:00",
+                        "close": "20:00:00"
+                    }
+                },
+                "holidays": {
+                    "NewYear": None,  # null -> None
+                    "Christmas": None  # null -> None
+                }
+            }
+        },
+        {
+            "store_id": 4,
+            "name": "GRAZIE 대진대학교 남자기숙사점",
+            "tel_num": "031-539-1444",
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "state": True,
+            "location": "경기도 포천시 호국로 1007",
+            "road_way": "대진대학교 남자기숙사 옆",
+            "parking": False,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Monday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Sunday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Tuesday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Saturday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Thursday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "11:00:00",
+                        "close": "19:00:00"
+                    }
+                },
+                "holidays": None  # null -> None
+            }
+        },
+        {
+            "store_id": 9,
+            "name": "업데이트 테스트1",
+            "tel_num": "업데이트 테스트2",
+            "state": True,
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "location": "업데이트 테스트3",
+            "road_way": "업데이트 테스트4",
+            "parking": False,
+            "operatingHours": {
+                "days": {
+                    "Friday": None,  # null -> None
+                    "Monday": None,  # null -> None
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "12:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Saturday": None,  # null -> None
+                    "Thursday": {
+                        "open": "12:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Wednesday": None  # null -> None
+                },
+                "holidays": None  # null -> None
+            }
+        },
+        {
+            "store_id": 10,
+            "name": "test1",
+            "tel_num": None,  # null -> None
+            "state": True,
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "location": "test3",
+            "road_way": "test4",
+            "parking": True,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "09:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Monday": {
+                        "open": "09:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "09:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Saturday": None,  # null -> None
+                    "Thursday": {
+                        "open": "09:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "09:00:00",
+                        "close": "17:00:00"
+                    }
+                },
+                "holidays": None  # null -> None
+            }
+        },
+        {
+            "store_id": 19,
+            "name": "Store A",
+            "tel_num": "111-222-3333",
+            "state": True,
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "location": "456 Elm St",
+            "road_way": "Maple Avenue",
+            "parking": True,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Monday": None,  # null -> None
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "09:01:00",
+                        "close": "18:20:00"
+                    },
+                    "Saturday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Thursday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "09:00:00",
+                        "close": "18:00:00"
+                    }
+                },
+                "holidays": None  # null -> None
+            }
+        },
+        {
+            "store_id": 21,
+            "name": "Daily Bread Bakery",
+            "tel_num": "987-654-3210",
+            "state": True,
+            "image": "http://10.0.2.2:8000/static/image.jpg",
+            "location": "45 Baker's Lane, Doughville",
+            "road_way": "Baker Street",
+            "parking": False,
+            "operatingHours": {
+                "days": {
+                    "Friday": {
+                        "open": "07:00:00",
+                        "close": "19:00:00"
+                    },
+                    "Monday": {
+                        "open": "07:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Sunday": None,  # null -> None
+                    "Tuesday": {
+                        "open": "07:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Saturday": {
+                        "open": "08:00:00",
+                        "close": "15:00:00"
+                    },
+                    "Thursday": {
+                        "open": "07:00:00",
+                        "close": "17:00:00"
+                    },
+                    "Wednesday": {
+                        "open": "07:00:00",
+                        "close": "17:00:00"
+                    }
+                },
+                "holidays": None  # null -> None
+            }
+        }
+    ]
+    return jsonify(stores)  # 데이터를 JSON 형식으로 반환
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)
