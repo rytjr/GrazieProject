@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:fluttertest/PaymentScreen.dart';
 import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'package:fluttertest/HomeScrean.dart';
+import 'dart:convert';
+import 'package:intl/intl.dart'; // 날짜 형식을 맞추기 위해 추가
 
 class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
@@ -15,6 +18,10 @@ class ProductOrderScreen extends StatefulWidget {
 class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int quantity = 1;
   String selectedCup = "Solo"; // 기본 선택된 컵 옵션
+  String orderMode = "매장"; // 기본 주문 형태 (매장 or 테이크아웃)
+  int storeId = 1; // 매장 ID (예시)
+  int userId = 2; // 사용자 ID (예시)
+  int? couponId; // 사용한 쿠폰 ID (nullable)
 
   @override
   Widget build(BuildContext context) {
@@ -149,11 +156,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // 주문하기 버튼 눌렸을 때의 동작
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => PaymentScreen()), // OrderContent로 이동
-                      );
+                      // 주문하기 버튼 눌렸을 때 API 요청 보내기
+                      _placeOrder();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,
@@ -265,7 +269,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => OrderContent()), // OrderContent로 이동
+                        MaterialPageRoute(builder: (context) => OrderContent()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -284,5 +288,87 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         );
       },
     );
+  }
+
+  // 주문 요청 보내기 함수
+  Future<void> _placeOrder() async {
+    try {
+      // 현재 시간을 주문 시각으로 설정 (예: 2024-09-20 18:00:00)
+      String orderDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
+      // 주문 요청 데이터 생성
+      Map<String, dynamic> orderData = {
+        "orderCreateDTO": {
+          "order_date": orderDate, // 주문 시각
+          "order_mode": orderMode, // 주문 형태 (매장 or 테이크아웃)
+          "store_id": storeId, // 주문한 매장 ID
+          "user_id": userId, // 주문한 사용자 ID
+          "user_use": selectedCup, // 일회용인지 텀블러인지
+          "coupon_id": couponId, // 사용한 쿠폰 ID (nullable)
+        },
+        "orderItemsCreateDTOS": [
+          {
+            "product_id": widget.product['product_id'], // 주문한 상품 ID
+            "quantity": quantity, // 상품 개수
+            "product_price": widget.product['price'] // 상품 가격
+          }
+        ]
+      };
+
+      // API 요청
+      final response = await http.post(
+        Uri.parse('http://34.64.110.210:8080/api/order/create'),
+        headers: {"Content-Type": "application/json"},
+        body: json.encode(orderData),
+      );
+
+      if (response.statusCode == 200) {
+        // 주문 성공 처리
+        print("주문이 성공적으로 완료되었습니다.");
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => PaymentScreen()), // 결제 화면으로 이동
+        );
+      } else {
+        // 주문 실패 처리
+        print("주문에 실패했습니다: ${response.body}");
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text("주문 실패"),
+              content: Text("주문을 처리하는 데 실패했습니다. 다시 시도해 주세요."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("확인"),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print("주문 중 오류 발생: $e");
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("오류"),
+            content: Text("주문을 처리하는 도중 오류가 발생했습니다. 다시 시도해 주세요."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text("확인"),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

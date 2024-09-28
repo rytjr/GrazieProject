@@ -43,6 +43,7 @@ dev_dependencies:
   dio: ^5.1.2
   http: ^0.13.3
   flutter_secure_storage: ^5.0.2
+  intl: ^0.17.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
