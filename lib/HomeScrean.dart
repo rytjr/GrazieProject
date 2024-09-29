@@ -608,13 +608,14 @@ class _OrderContentState extends State<OrderContent> {
           : ListView.builder(
         itemCount: products.length,
         itemBuilder: (context, index) {
-          print('Image URL: ${products[index]['image']}');
+          print("Product data: ${products[index]}");
+          // print('Image URL: ${products[index]['image']}');
           return ListTile(
             leading: Image.network(
               products[index]['image'],
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                print('Image load error: $error'); // 오류 메시지를 출력
+                // print('Image load error: $error'); // 오류 메시지를 출력
                 return Icon(Icons.error);
               },
             ),

@@ -10,7 +10,7 @@ class ProductDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(product['name']),
+        title: Text(product['name'] ?? '상품 이름 없음'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -19,15 +19,18 @@ class ProductDetailScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Image.network(
-                product['image'],
+                product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL 설정
                 width: double.infinity,
                 height: 190,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.error); // 이미지 로드 실패 시 에러 아이콘 표시
+                },
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  product['name'],
+                  product['name'] ?? '이름 없음',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
@@ -37,7 +40,7 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  product['explanation'],
+                  product['explanation'] ?? '설명 없음',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey,
@@ -47,7 +50,7 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  '${product['price']}원',
+                  '${product['price'] ?? 0}원',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
@@ -57,7 +60,7 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 13, 22, 0),
                 child: Row(
-                  children: _buildTemperatureButtons(product['temperature']),
+                  children: _buildTemperatureButtons(product['temperature'] ?? 'both'),
                 ),
               ),
               Padding(
