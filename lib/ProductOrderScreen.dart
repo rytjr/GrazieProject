@@ -8,8 +8,16 @@ import 'package:intl/intl.dart'; // 날짜 형식을 맞추기 위해 추가
 
 class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
+  final String storeId;  // 매장 ID 추가
+  final String orderOption;  // 매장이용 or To-Go 추가
 
-  ProductOrderScreen({required this.product});
+  // 생성자에서 product, storeId, orderOption을 받도록 수정
+  ProductOrderScreen({
+    required this.product,
+    required this.storeId,  // 매장 ID 받기
+    required this.orderOption,  // 매장이용 or To-Go 받기
+  });
+
 
   @override
   _ProductOrderScreenState createState() => _ProductOrderScreenState();
@@ -266,10 +274,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => OrderContent()),
+                        MaterialPageRoute(
+                          builder: (context) => OrderContent(
+                            storeId: int.parse(widget.storeId),  // 매장 ID를 int로 변환하여 전달
+                            orderMode: widget.orderOption,  // 매장이용 or To-Go 정보 전달
+                          ),
+                        ),
                       );
                     },
                     style: ElevatedButton.styleFrom(

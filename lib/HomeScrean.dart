@@ -19,6 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   List<dynamic> stores = [];
   bool isLoading = true;
+  String storeId = ''; // storeId 변수 추가
+  String orderMode = ''; // orderMode 변수 추가
 
   @override
   void initState() {
@@ -50,11 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (index == 1) { // Order 탭을 클릭했을 때
       _showOrderModal(context);
-
     }
   }
-
-
 
   void _showOrderModal(BuildContext context) {
     showModalBottomSheet(
@@ -106,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void showStoreDetailsModal(BuildContext context, String title, String address, String imagePath, String operatingHours, String additionalInfo) {
+  void showStoreDetailsModal(BuildContext context, String title, String address, String imagePath, String operatingHours, String additionalInfo, dynamic store) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -135,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     SizedBox(height: 10),
-                    Image.network(imagePath, width: MediaQuery.of(context).size.width, height: 200, fit: BoxFit.cover),  // 여기 수정
+                    Image.network(imagePath, width: MediaQuery.of(context).size.width, height: 200, fit: BoxFit.cover),
                     SizedBox(height: 20),
                     Text(title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     Text(address, style: TextStyle(fontSize: 18, color: Colors.grey[800])),
@@ -158,8 +157,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
-                        pickupButton(context, Icons.local_cafe, "매장 이용"),
-                        pickupButton(context, Icons.shopping_bag, "To-Go"),
+                        pickupButton(context, Icons.local_cafe, "매장 이용", store),
+                        pickupButton(context, Icons.shopping_bag, "To-Go", store),
                       ],
                     )
                   ],
@@ -172,11 +171,27 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget pickupButton(BuildContext context, IconData icon, String text) {
+
+  Widget pickupButton(BuildContext context, IconData icon, String text, dynamic store) {
     return GestureDetector(
       onTap: () {
+        // storeId가 String으로 전달되었을 수 있으므로 이를 int로 변환
+        int storeIdInt = int.tryParse(store['id'].toString()) ?? 0; // 변환 실패 시 0 할당
+
+        setState(() {
+          orderMode = text; // 매장 이용 또는 To-Go 저장
+        });
+
         Navigator.popUntil(context, (route) => route.isFirst);
-        Navigator.pushReplacementNamed(context, '/order');  // 여기가 등록된 라우트가 있는지 확인 필요
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderContent(
+              storeId: storeIdInt, // 변환된 int형 storeId 전달
+              orderMode: orderMode, // 매장이용 또는 To-Go 정보 전달
+            ),
+          ),
+        );
       },
       child: Container(
         width: 80,
@@ -198,16 +213,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+
+
   Widget _buildStoreTile(String? title, String? subtitle, String distance, String? imagePath, dynamic store) {
     return GestureDetector(
-      onTap: () => showStoreDetailsModal(
-          context,
-          title ?? '매장 이름 없음', // null일 때 기본값 제공
-          subtitle ?? '매장 주소 없음', // null일 때 기본값 제공
-          imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
-          "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
-          "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다." // 추가 정보 임시 설정
-      ),
+      onTap: () {
+        showStoreDetailsModal(
+            context,
+            title ?? '매장 이름 없음', // null일 때 기본값 제공
+            subtitle ?? '매장 주소 없음', // null일 때 기본값 제공
+            imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
+            "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
+            "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다.", // 추가 정보 임시 설정
+            store // 매장 정보를 전달
+        );
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0),
         child: Container(
@@ -249,12 +269,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-
-  static List<Widget> _widgetOptions() => <Widget>[
+  List<Widget> _widgetOptions() => <Widget>[
     HomeContent(),
-    OrderContent(),
+    OrderContent(storeId: int.tryParse(storeId) ?? 0, orderMode: orderMode), // storeId를 int로 변환
     OtherContent(),
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -575,6 +595,12 @@ class _HomeContentState extends State<HomeContent> {
 }
 
 class OrderContent extends StatefulWidget {
+  final int storeId; // 매장 ID
+  final String orderMode; // 매장이용 또는 To-Go 정보
+
+  // 생성자에서 storeId와 orderMode를 받도록 수정
+  OrderContent({required this.storeId, required this.orderMode});
+
   @override
   _OrderContentState createState() => _OrderContentState();
 }
@@ -609,13 +635,11 @@ class _OrderContentState extends State<OrderContent> {
         itemCount: products.length,
         itemBuilder: (context, index) {
           print("Product data: ${products[index]}");
-          // print('Image URL: ${products[index]['image']}');
           return ListTile(
             leading: Image.network(
               products[index]['image'],
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {
-                // print('Image load error: $error'); // 오류 메시지를 출력
                 return Icon(Icons.error);
               },
             ),
@@ -625,10 +649,11 @@ class _OrderContentState extends State<OrderContent> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      ProductDetailScreen(
-                        product: products[index],
-                      ),
+                  builder: (context) => ProductDetailScreen(
+                    product: products[index],  // 제품 정보 전달
+                    storeId: widget.storeId.toString(),  // storeId 전달
+                    orderOption: widget.orderMode,       // orderOption 전달 (매장 이용 또는 To-Go)
+                  ),
                 ),
               );
             },

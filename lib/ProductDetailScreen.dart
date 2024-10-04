@@ -3,8 +3,14 @@ import 'package:fluttertest/ProductOrderScreen.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final dynamic product;
+  final String storeId;  // 매장 ID 추가
+  final String orderOption;  // 매장이용 or To-Go 추가
 
-  ProductDetailScreen({required this.product});
+  ProductDetailScreen({
+    required this.product,
+    required this.storeId,  // 매장 ID 받기
+    required this.orderOption,  // 매장이용 or To-Go 받기
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,15 +24,17 @@ class ProductDetailScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 이미지 영역
               Image.network(
-                product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL 설정
+                product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
                 width: double.infinity,
                 height: 190,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return Icon(Icons.error); // 이미지 로드 실패 시 에러 아이콘 표시
+                  return Icon(Icons.error, size: 100, color: Colors.red); // 이미지 로드 실패 시
                 },
               ),
+              // 상품 이름
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
@@ -37,6 +45,7 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // 설명
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
@@ -47,6 +56,7 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // 가격
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
@@ -57,12 +67,14 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // 온도 선택 버튼
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 13, 22, 0),
                 child: Row(
                   children: _buildTemperatureButtons(product['temperature'] ?? 'both'),
                 ),
               ),
+              // 추가 설명
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 10, 22, 0),
                 child: Container(
@@ -81,6 +93,7 @@ class ProductDetailScreen extends StatelessWidget {
                   ),
                 ),
               ),
+              // 주문하기 버튼
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 20, 22, 5),
                 child: Column(
@@ -94,7 +107,11 @@ class ProductDetailScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ProductOrderScreen(product: product),
+                              builder: (context) => ProductOrderScreen(
+                                product: product,
+                                storeId: storeId,  // 매장 ID 전달
+                                orderOption: orderOption,  // 매장이용 or To-Go 전달
+                              ),
                             ),
                           );
                         },
