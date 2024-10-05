@@ -164,8 +164,19 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // 주문하기 버튼 눌렸을 때 API 요청 보내기
-                      _placeOrder();
+                      // 주문하기 버튼 눌렸을 때 PaymentScreen으로 데이터 전달
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PaymentScreen(
+                            product: widget.product,
+                            storeId: widget.storeId,
+                            orderOption: widget.orderOption,
+                            quantity: quantity,
+                            selectedCup: selectedCup,
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,
@@ -263,12 +274,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       // 장바구니로 이동하는 로직 추가
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ShoppingCartScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => ShoppingCartScreen()),
                       );
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.brown),
-                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
                     ),
                     child: Text('장바구니 가기'),
                   ),
@@ -277,16 +290,20 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OrderContent(
-                            storeId: int.parse(widget.storeId),  // 매장 ID를 int로 변환하여 전달
-                            orderMode: widget.orderOption,  // 매장이용 or To-Go 정보 전달
-                          ),
+                          builder: (context) =>
+                              OrderContent(
+                                storeId: int.parse(widget.storeId),
+                                // 매장 ID를 int로 변환하여 전달
+                                orderMode: widget
+                                    .orderOption, // 매장이용 or To-Go 정보 전달
+                              ),
                         ),
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.brown,
-                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 12),
                     ),
                     child: Text(
                       '다른 메뉴 더보기',
@@ -300,87 +317,5 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         );
       },
     );
-  }
-
-  // 주문 요청 보내기 함수
-  Future<void> _placeOrder() async {
-    try {
-      // 현재 시간을 주문 시각으로 설정 (예: 2024-09-20 18:00:00)
-      String orderDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-
-      // 주문 요청 데이터 생성
-      Map<String, dynamic> orderData = {
-        "orderCreateDTO": {
-          "order_date": orderDate, // 주문 시각
-          "order_mode": orderMode, // 주문 형태 (매장 or 테이크아웃)
-          "store_id": storeId, // 주문한 매장 ID
-          "user_id": userId, // 주문한 사용자 ID
-          "user_use": selectedCup, // 일회용인지 텀블러인지
-          "coupon_id": couponId, // 사용한 쿠폰 ID (nullable)
-        },
-        "orderItemsCreateDTOS": [
-          {
-            "product_id": widget.product['product_id'], // 주문한 상품 ID
-            "quantity": quantity, // 상품 개수
-            "product_price": widget.product['price'] // 상품 가격
-          }
-        ]
-      };
-
-      // API 요청
-      final response = await http.post(
-        Uri.parse('http://34.64.110.210:8080/api/order/create'),
-        headers: {"Content-Type": "application/json"},
-        body: json.encode(orderData),
-      );
-
-      if (response.statusCode == 200) {
-        // 주문 성공 처리
-        print("주문이 성공적으로 완료되었습니다.");
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PaymentScreen()), // 결제 화면으로 이동
-        );
-      } else {
-        // 주문 실패 처리
-        print("주문에 실패했습니다: ${response.body}");
-        showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: Text("주문 실패"),
-              content: Text("주문을 처리하는 데 실패했습니다. 다시 시도해 주세요."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("확인"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    } catch (e) {
-      print("주문 중 오류 발생: $e");
-      showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text("오류"),
-            content: Text("주문을 처리하는 도중 오류가 발생했습니다. 다시 시도해 주세요."),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text("확인"),
-              ),
-            ],
-          );
-        },
-      );
-    }
   }
 }

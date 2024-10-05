@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/CashScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 토큰 저장/가져오기 위한 패키지
 import 'dart:convert';
 
 class PaymentScreen extends StatefulWidget {
+  final dynamic product;
+  final String storeId;  // 매장 ID
+  final String orderOption;  // 매장이용 or To-Go
+  final int quantity;
+  final String selectedCup;
+
+  // 생성자에서 데이터를 전달받도록 수정
+  PaymentScreen({
+    required this.product,
+    required this.storeId,
+    required this.orderOption,
+    required this.quantity,
+    required this.selectedCup,
+  });
+
   @override
   _PaymentScreenState createState() => _PaymentScreenState();
 }
@@ -12,6 +29,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   List<dynamic> orders = [];
   bool _isExpanded = false;
   bool isLoading = true;
+  final _storage = FlutterSecureStorage(); // SecureStorage 초기화
+  late String pageUrl;
 
   @override
   void initState() {
@@ -39,6 +58,67 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return orders.fold(0, (sum, item) => sum + (item['price'] as int? ?? 0) * (item['quantity'] as int? ?? 0));
   }
 
+  // 결제 요청을 보내는 메서드
+  Future<void> _makePayment() async {
+    try {
+      // API로 GET 요청을 보냄
+      final response = await http.get(
+        Uri.parse('http://34.64.110.210:8080/api/pay/page'),  // 요청할 URL로 변경
+      );
+
+      if (response.statusCode == 200) {
+        final pageUrl = response.body; // 응답에서 반환된 URL을 받아옴
+        print('받아온 url : ${pageUrl}');
+        _showPaymentWebView(pageUrl); // WebView로 페이지 열기
+      } else {
+        // 결제 실패 처리
+        print('결제 실패: ${response.body}');
+        _showErrorDialog('결제에 실패했습니다. 다시 시도해 주세요.');
+      }
+    } catch (e) {
+      print('오류가 발생했습니다: $e');
+      _showErrorDialog('결제 요청 중 오류가 발생했습니다.');
+    }
+  }
+  // 결제 페이지를 WebView로 열기
+  void _showPaymentWebView(String pageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: Text('결제 페이지'),
+          ),
+          body: WebView(
+            initialUrl: pageUrl, // 반환된 페이지 URL을 WebView에 로드
+            javascriptMode: JavascriptMode.unrestricted, // 자바스크립트 허용
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  // 결제 실패 다이얼로그
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('결제 실패'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('확인'),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -227,9 +307,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {
-          // 결제하기 동작 추가
-        },
+        onPressed: _makePayment,  // 결제하기 버튼 클릭 시 호출
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
         ),
@@ -340,5 +418,11 @@ class CouponCard extends StatelessWidget {
 }
 
 void main() => runApp(MaterialApp(
-  home: PaymentScreen(),
+  home: PaymentScreen(
+    product: {'product_id': 1, 'name': '커피', 'price': 5000, 'image': 'image_url'},  // 예시 데이터
+    storeId: '1',
+    orderOption: '매장이용',
+    quantity: 1,
+    selectedCup: 'Solo',
+  ),
 ));
