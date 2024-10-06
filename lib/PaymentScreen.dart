@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/CashScreen.dart';
+import 'package:fluttertest/PaymentWebView.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 토큰 저장/가져오기 위한 패키지
@@ -39,7 +40,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> fetchOrderData() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/cart/items?userId=2'));
+    final response = await http.get(Uri.parse('http://34.64.110.210:8080/cart/items'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -307,7 +308,23 @@ class _PaymentScreenState extends State<PaymentScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _makePayment,  // 결제하기 버튼 클릭 시 호출
+        onPressed: () {
+          // 주문하기 버튼 눌렸을 때 PaymentScreen으로 데이터 전달
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentWebView(),
+            ),
+          ).then((result) {
+            if (result != null && result['success']) {
+              print("결제 성공: ${result['imp_uid']}");
+              // 결제 성공 처리
+            } else {
+              print("결제 실패: ${result['error_msg']}");
+              // 결제 실패 처리
+            }
+          });
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
         ),
@@ -335,7 +352,7 @@ class _CouponModalState extends State<CouponModal> {
 
   // 서버에서 쿠폰 데이터를 받아오는 함수
   void fetchCoupons() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/discount-coupons/read/13'));
+    final response = await http.get(Uri.parse('http://34.64.110.210:8080/coupon/read'));
 
     if (response.statusCode == 200) {
       setState(() {

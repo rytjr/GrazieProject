@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>포트원 결제</title>
+    <script src="https://cdn.iamport.kr/v1/iamport.js"></script>
+</head>
+<body>
+<h1>결제를 진행 중입니다...</h1>
+<script>
+      function requestPay() {
+        IMP.init("imp62488455"); // 발급받은 가맹점 식별코드로 대체하세요
+
+        IMP.request_pay(
+          {
+            pg: "kakaopay",  // 결제 PG사
+            pay_method: "card", // 결제 수단
+            merchant_uid: "order_id_12345", // 주문 번호
+            name: "Flutter 결제 테스트",
+            amount: 1000, // 결제 금액
+            buyer_email: "example@example.com",
+            buyer_name: "홍길동",
+            buyer_tel: "010-1234-5678",
+            buyer_addr: "서울특별시 강남구",
+            buyer_postcode: "123-456",
+          },
+          function (rsp) {
+            if (rsp.success) {
+              // 결제 성공 시
+              console.log('결제 성공: ' + rsp.imp_uid);  // 결제 성공 시 로그 출력
+              alert('결제 성공: ' + rsp.imp_uid);
+              window.location.href = "success://payment?imp_uid=" + rsp.imp_uid + "&merchant_uid=" + rsp.merchant_uid;
+            } else {
+              // 결제 실패 시
+              console.log('결제 실패: ' + rsp.error_msg);  // 결제 실패 시 로그 출력
+              alert('결제 실패: ' + rsp.error_msg);
+              window.location.href = "fail://payment?error_msg=" + rsp.error_msg;
+            }
+          }
+        );
+      }
+      requestPay();
+    </script>
+</body>
+</html>
