@@ -435,6 +435,7 @@ class CouponCard extends StatelessWidget {
 }
 
 void main() => runApp(MaterialApp(
+  debugShowCheckedModeBanner: false,
   home: PaymentScreen(
     product: {'product_id': 1, 'name': '커피', 'price': 5000, 'image': 'image_url'},  // 예시 데이터
     storeId: '1',

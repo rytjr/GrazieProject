@@ -5,7 +5,8 @@
     <application
         android:label="fluttertest"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="false">  <!-- 하드웨어 가속을 꺼서 문제 해결 시도 -->>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -42,6 +43,11 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="kakaotalk" />
         </intent>
     </queries>
 </manifest>
