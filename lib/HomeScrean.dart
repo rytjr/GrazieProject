@@ -9,6 +9,8 @@ import 'package:fluttertest/MyPageScreen.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/TermsScreen.dart';
 import 'package:fluttertest/CouponScreen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -370,7 +372,7 @@ class _HomeContentState extends State<HomeContent> {
       try {
         // dio.Response로 변경하여 Dio 패키지를 활용한 getRequest 호출
         Response response = await apiService.getRequest(
-          'http://10.0.2.2:8000/api/auth/check',
+          'http://34.64.110.210:8080/users/readProflie',
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -555,6 +557,12 @@ class _HomeContentState extends State<HomeContent> {
         child: OutlinedButton(
           onPressed: () {
             // "내정보 확인" 버튼이 눌렸을 때의 동작
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MyPageScreen(),
+              ),
+            );
           },
           style: OutlinedButton.styleFrom(
             side: BorderSide(color: Colors.grey),
@@ -671,8 +679,49 @@ class OtherContent extends StatefulWidget {
 }
 
 class _OtherContentState extends State<OtherContent> {
-  final bool isLoading = false;
+  bool isLoading = true;
+  bool isButtonEnabled = false;
+  String userName = ""; // 기본 이름
   final SecureStorageService _storageService = SecureStorageService(); // SecureStorageService 인스턴스 생성
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile(); // 사용자 정보 요청
+  }
+
+  Future<void> _fetchUserProfile() async {
+    try {
+      String? token = await _storageService.getToken(); // 토큰 가져오기
+      final response = await http.get(
+        Uri.parse('http://localhost:8080/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          userName = data['name']; // 받아온 사용자 이름으로 변경
+          isButtonEnabled = true;  // 성공적으로 로드되면 버튼 활성화
+        });
+      } else {
+        setState(() {
+          isButtonEnabled = false; // 실패 시 버튼 비활성화
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isButtonEnabled = false; // 예외 발생 시 버튼 비활성화
+      });
+      print('사용자 정보 불러오기 실패: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // 로딩 완료
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -696,7 +745,7 @@ class _OtherContentState extends State<OtherContent> {
           children: [
             Center(
               child: Text(
-                "구교석님\n환영합니다!!",
+                "$userName님\n환영합니다!!", // 받아온 이름을 표시
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -721,39 +770,41 @@ class _OtherContentState extends State<OtherContent> {
             ListTile(
               title: Text("이용약관"),
               trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
+              onTap: isButtonEnabled
+                  ? () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TermsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => TermsScreen()),
                 );
-              },
+              }
+                  : null, // 비활성화 상태면 동작하지 않도록 설정
             ),
             Divider(),
             ListTile(
               title: Text("이벤트"),
               trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
+              onTap: isButtonEnabled ? () {
                 // 이벤트 화면으로 이동
-              },
+              } : null, // 비활성화 상태면 동작하지 않음
             ),
             Divider(),
             ListTile(
               title: Text("고객의 소리"),
               trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
+              onTap: isButtonEnabled ? () {
                 // 고객의 소리 화면으로 이동
-              },
+              } : null, // 비활성화 상태면 동작하지 않음
             ),
             Spacer(),
             Center(
               child: TextButton(
                 onPressed: () async {
-                  // 로그아웃 시 토큰 삭제
                   await _logout();
-                  // 로그아웃 후 HomeContent로 이동
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => HomeContent()),
+                    MaterialPageRoute(
+                        builder: (context) => HomeContent()),
                         (route) => false,
                   );
                 },
@@ -772,18 +823,20 @@ class _OtherContentState extends State<OtherContent> {
   Widget _buildOptionButton(
       BuildContext context, IconData icon, String text, Widget targetScreen) {
     return GestureDetector(
-      onTap: () {
+      onTap: isButtonEnabled
+          ? () {
         Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => targetScreen),
         );
-      },
+      }
+          : null, // 비활성화 상태면 동작하지 않음
       child: Column(
         children: [
           CircleAvatar(
             radius: 30,
             backgroundColor: Colors.white,
-            child: Icon(icon, size: 30, color: Colors.black),
+            child: Icon(icon, size: 30, color: isButtonEnabled ? Colors.black : Colors.grey),
           ),
           SizedBox(height: 8),
           Text(
@@ -791,6 +844,7 @@ class _OtherContentState extends State<OtherContent> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
+              color: isButtonEnabled ? Colors.black : Colors.grey, // 버튼 비활성화 시 색상 회색
             ),
           ),
         ],
@@ -800,7 +854,6 @@ class _OtherContentState extends State<OtherContent> {
 
   Future<void> _logout() async {
     try {
-      // SecureStorageService를 사용하여 저장된 인증 토큰 삭제
       await _storageService.deleteToken();
       print('로그아웃 성공');
     } catch (e) {

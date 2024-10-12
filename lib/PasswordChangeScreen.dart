@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -26,12 +27,16 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
 
   // 비밀번호 변경 요청 함수
   Future<void> _changePassword() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
     final String currentPassword = _currentPasswordController.text;
     final String newPassword = _newPasswordController.text;
 
     final response = await http.post(
-      Uri.parse('http://localhost:8080/users/changePassword'),
-      headers: {'Content-Type': 'application/json'},
+      Uri.parse('http://34.64.110.210:8080/users/changePassword'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
       body: jsonEncode({
         'currentPassword': currentPassword,
         'newPassword': newPassword,

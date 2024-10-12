@@ -1,4 +1,9 @@
+import 'dart:convert'; // JSON 파싱을 위해 추가
 import 'package:flutter/material.dart';
+import 'package:fluttertest/LoginScreen.dart';
+import 'package:fluttertest/SecureStorageService.dart';
+import 'package:fluttertest/UserInScreen.dart';
+import 'package:http/http.dart' as http;
 
 class PasswordFindScreen extends StatelessWidget {
   @override
@@ -15,24 +20,19 @@ class PasswordFindScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 비밀번호 찾기 텍스트 제거 및 전체 디자인을 위로 올리기 위해 SizedBox의 height 값을 줄였습니다.
             SizedBox(height: 20),
-            // 아이디 입력 필드
             _buildInputField('아이디'),
             SizedBox(height: 20),
-            // 이름 입력 필드
             _buildInputField('이름'),
             SizedBox(height: 20),
-            // 이메일 입력 필드
             _buildInputField('이메일'),
             SizedBox(height: 40),
-            // 비밀번호 찾기 버튼
             SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
-                onPressed: () {
-                  // 비밀번호 찾기 버튼 눌렀을 때 동작
+                onPressed: () async {
+                  await _sendNewPassword(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF00C853), // 버튼 색상 (녹색)
@@ -44,28 +44,38 @@ class PasswordFindScreen extends StatelessWidget {
               ),
             ),
             SizedBox(height: 20),
-            // 하단 로그인, 아이디 찾기, 회원가입 텍스트
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   TextButton(
                     onPressed: () {
-                      // 로그인으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginScreen()),
+                      );
                     },
                     child: Text('로그인'),
                   ),
                   Text('/'),
                   TextButton(
                     onPressed: () {
-                      // 아이디 찾기 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => PasswordFindScreen()),
+                      );
                     },
                     child: Text('아이디 찾기'),
                   ),
                   Text('/'),
                   TextButton(
                     onPressed: () {
-                      // 회원가입 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => UserInScreen()),
+                      );
                     },
                     child: Text('회원가입'),
                   ),
@@ -78,7 +88,6 @@ class PasswordFindScreen extends StatelessWidget {
     );
   }
 
-  // 텍스트 입력 필드 디자인을 위한 메서드
   Widget _buildInputField(String labelText) {
     return TextField(
       decoration: InputDecoration(
@@ -92,6 +101,51 @@ class PasswordFindScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // 비밀번호 변경 요청
+  Future<void> _sendNewPassword(BuildContext context) async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+
+    final response = await http.post(
+      Uri.parse('http://localhost:8080/users/changeTempPassword?token=$token'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // 서버로부터 반환된 JSON 데이터에서 비밀번호를 추출
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final newPassword = responseData['newPassword']; // 서버에서 반환된 비밀번호
+
+      // 모달 창에 새 비밀번호를 표시하고 확인을 누르면 로그인 화면으로 이동
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('새 비밀번호'),
+            content: Text('새 비밀번호: $newPassword'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
+                  );
+                },
+                child: Text('확인'),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('비밀번호 변경에 실패했습니다.')),
+      );
+    }
   }
 }
 

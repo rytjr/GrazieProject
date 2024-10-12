@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:fluttertest/LoginScreen.dart';
 
 class UserInfoChangeScreen extends StatefulWidget {
   @override
@@ -12,8 +18,6 @@ class UserInfoChangeScreen extends StatefulWidget {
 }
 
 class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
-  File? _profileImage; // 사용자가 선택한 프로필 이미지
-  final picker = ImagePicker(); // 이미지 선택을 위한 picker
   Map<String, dynamic> userProfile = {}; // 사용자 정보 저장
 
   @override
@@ -35,23 +39,16 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     }
   }
 
-  // 이미지 선택을 위한 함수
-  Future<void> _pickImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      if (pickedFile != null) {
-        _profileImage = File(pickedFile.path);
-      }
-    });
-  }
-
   // 사용자 정보 수정 요청 보내기
   Future<void> updateUserProfile() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
     try {
       final response = await http.put(
         Uri.parse('http://localhost:8080/profile/update'),
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
         body: json.encode(userProfile),
       );
 
@@ -71,9 +68,14 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
 
   // 회원탈퇴 요청 보내기
   Future<void> deleteUserAccount() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:8080/users/delete'),
+        Uri.parse('http://34.64.110.210:8080/users/delete'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -104,29 +106,6 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: GestureDetector(
-                onTap: _pickImage,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundImage: _profileImage == null
-                      ? AssetImage('assets/placeholder.png')
-                      : FileImage(_profileImage!) as ImageProvider,
-                  child: _profileImage == null
-                      ? Center(
-                    child: Text(
-                      '프로필 사진을 올려주세요',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  )
-                      : null,
-                ),
-              ),
-            ),
             SizedBox(height: 20),
             Divider(),
             Text('이름'),
@@ -150,7 +129,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
             ),
             TextField(
               onChanged: (value) => userProfile['nickname'] = value,
-              decoration: InputDecoration(labelText: '기념일'),
+              decoration: InputDecoration(labelText: '성별'),
               controller:
               TextEditingController(text: userProfile['nickname']),
             ),
@@ -196,6 +175,7 @@ void main() {
     home: UserInfoChangeScreen(),
   ));
 }
+
 
 
 // class UserInfoChangeScreen extends StatefulWidget {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/CashScreen.dart';
 import 'package:fluttertest/PaymentWebView.dart';
+import 'package:fluttertest/impart.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 토큰 저장/가져오기 위한 패키지
@@ -308,22 +309,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: () {
-          // 주문하기 버튼 눌렸을 때 PaymentScreen으로 데이터 전달
-          Navigator.push(
+        onPressed: () async {
+          // 결제 화면을 호출하고 결제 결과를 받음
+          final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PaymentWebView(),
+              builder: (context) => impart(),
             ),
-          ).then((result) {
-            if (result != null && result['success']) {
-              print("결제 성공: ${result['imp_uid']}");
-              // 결제 성공 처리
-            } else {
-              print("결제 실패: ${result['error_msg']}");
-              // 결제 실패 처리
-            }
-          });
+          );
+          // 결제 결과 처리
+          if (result != null) {
+            // _handlePaymentResult(result);
+          }
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
@@ -333,6 +330,55 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 }
+
+// // 결제 실패 시 오류 메시지를 보여주는 함수
+// void _showErrorDialog(String message) {
+//   showDialog(
+//     context: context,
+//     builder: (context) {
+//       return AlertDialog(
+//         title: Text('결제 실패'),
+//         content: Text(message),
+//         actions: [
+//           TextButton(
+//             onPressed: () {
+//               Navigator.pop(context); // 다이얼로그 닫기
+//             },
+//             child: Text('확인'),
+//           ),
+//         ],
+//       );
+//     },
+//   );
+// }
+//
+// // 결제 성공 또는 실패 시 호출되는 함수
+// void _handlePaymentResult(Map<String, String> result) {
+//   if (result['success'] == 'true') {
+//     // 결제 성공 처리
+//     showDialog(
+//       context: context,
+//       builder: (context) {
+//         return AlertDialog(
+//           title: Text('결제 성공'),
+//           content: Text('결제가 성공적으로 완료되었습니다.'),
+//           actions: [
+//             TextButton(
+//               onPressed: () {
+//                 Navigator.pop(context); // 다이얼로그 닫기
+//               },
+//               child: Text('확인'),
+//             ),
+//           ],
+//         );
+//       },
+//     );
+//   } else {
+//     // 결제 실패 처리
+//     _showErrorDialog('결제에 실패했습니다. 다시 시도해 주세요.');
+//   }
+// }
+
 
 // 쿠폰 모달 화면
 class CouponModal extends StatefulWidget {

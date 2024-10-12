@@ -81,7 +81,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
 
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2:8000/users/join'),
+          Uri.parse('http://34.64.110.210:8080/users/join'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'userId': widget.id,  // 여기서 'id'를 'userId'로 변경
