@@ -344,6 +344,7 @@ class HomeContent extends StatefulWidget {
 class _HomeContentState extends State<HomeContent> {
   List<dynamic> products = [];
   bool isLoggedIn = false; // 로그인 상태를 확인하는 변수
+  String userName = ''; // 사용자 이름 저장 변수
   final ApiService apiService = ApiService();
 
   @override
@@ -381,6 +382,7 @@ class _HomeContentState extends State<HomeContent> {
         if (response.statusCode == 200) {
           setState(() {
             isLoggedIn = true;
+            userName = response.data['name']; // 서버에서 반환된 name 값을 가져옴
           });
         } else {
           setState(() {
@@ -401,7 +403,6 @@ class _HomeContentState extends State<HomeContent> {
       });
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -547,60 +548,95 @@ class _HomeContentState extends State<HomeContent> {
       ),
     );
   }
+
   // 로그인한 상태의 UI
   Widget _buildLoggedInUI() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
-      child: SizedBox(
-        width: double.infinity,
-        height: 110,
-        child: OutlinedButton(
-          onPressed: () {
-            // "내정보 확인" 버튼이 눌렸을 때의 동작
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MyPageScreen(),
+      child: Column(
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 110,
+            child: OutlinedButton(
+              onPressed: () {
+                // "내정보 확인" 버튼이 눌렸을 때의 동작
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyPageScreen(),
+                  ),
+                );
+              },
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: Colors.grey),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
-            );
-          },
-          style: OutlinedButton.styleFrom(
-            side: BorderSide(color: Colors.grey),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "반갑습니다. 구교석님",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "반갑습니다. $userName님", // 서버에서 받아온 사용자 이름
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Text(
+                        "내정보 확인",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 5),
-                  Text(
-                    "내정보 확인",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                  ),
+                  Icon(Icons.arrow_forward_ios, color: Colors.grey),
                 ],
               ),
-              Icon(Icons.arrow_forward_ios, color: Colors.grey),
-            ],
+            ),
           ),
-        ),
+          SizedBox(height: 15), // 내 정보 확인하기 버튼 아래에 간격 추가
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              onPressed: () {
+                // "내정보 확인" 버튼이 눌렸을 때의 동작
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyPageScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              child: Text(
+                "내 정보 확인하기",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
+
 
 class OrderContent extends StatefulWidget {
   final int storeId; // 매장 ID
@@ -694,7 +730,7 @@ class _OtherContentState extends State<OtherContent> {
     try {
       String? token = await _storageService.getToken(); // 토큰 가져오기
       final response = await http.get(
-        Uri.parse('http://localhost:8080/profile'),
+        Uri.parse('http://34.64.110.210:8080/profile'),
         headers: {
           'Authorization': 'Bearer $token',
         },

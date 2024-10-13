@@ -28,7 +28,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
 
   // 사용자 정보 가져오기
   Future<void> fetchUserProfile() async {
-    final response = await http.get(Uri.parse('http://localhost:8080/profile'));
+    final response = await http.get(Uri.parse('hhttp://34.64.110.210:8080/profile'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -45,7 +45,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     String? token = await storageService.getToken();
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:8080/profile/update'),
+        Uri.parse('http://34.64.110.210:8080/profile/update'),
         headers: {
           'Authorization': 'Bearer $token',
         },
