@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:fluttertest/LoginScreen.dart';
@@ -28,7 +29,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
   // 이메일 형식 검사
   bool validateEmailFormat(String email) {
     final RegExp emailRegExp = RegExp(
-      r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]+()",
+      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,}$",
     );
     return emailRegExp.hasMatch(email);
   }
@@ -76,22 +77,30 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
 
   // 이메일을 API로 전송
   void _sendEmailData() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
     if (_isEmailValid) {
       final email = _emailController.text;
 
       try {
         final response = await http.post(
           Uri.parse('http://34.64.110.210:8080/users/join'),
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+          },
           body: jsonEncode({
             'userId': widget.id,  // 여기서 'id'를 'userId'로 변경
             'password': widget.password,
             'email': email,
             'name': widget.name,
-            'phone': widget.phone,
+            'phone': widget.phone
           }),
 
         );
+
+        // 서버 응답 상태 코드 및 반환값 출력
+        print('응답 상태 코드: ${response.statusCode}');
+        print('응답 본문: ${response.body}');
 
         if (response.statusCode == 200) {
           Navigator.push(
@@ -100,12 +109,12 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
           );
         } else {
           setState(() {
-            _validationMessage = '서버에서 오류가 발생했습니다.';
+            _validationMessage = '서버에서 오류가 발생했습니다. 응답: ${response.body}';
           });
         }
       } catch (e) {
         setState(() {
-          _validationMessage = '네트워크 오류가 발생했습니다.';
+          _validationMessage = '네트워크 오류가 발생했습니다. 오류 내용: $e';
         });
       }
     }

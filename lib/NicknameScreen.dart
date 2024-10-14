@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // JSON 파싱을 위해 추가
 
 class NicknameScreen extends StatefulWidget {
   @override
@@ -15,6 +18,39 @@ class _NicknameScreenState extends State<NicknameScreen> {
     setState(() {
       _isButtonEnabled = nicknameRegExp.hasMatch(nickname);
     });
+  }
+
+  // 닉네임 수정 요청 함수
+  Future<void> _updateNickname() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final String nickname = _nicknameController.text;
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8080/admin/read'), // 수정할 API 주소
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'nickname': nickname}),
+      );
+
+      if (response.statusCode == 200) {
+        // 닉네임 수정 성공 시 이전 화면으로 이동
+        Navigator.pop(context);
+      } else {
+        // 실패 시 에러 메시지
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('닉네임 수정에 실패했습니다. 다시 시도해주세요.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('오류가 발생했습니다. 인터넷 연결을 확인해주세요.')),
+      );
+      print('오류 발생: $e');
+    }
   }
 
   @override
@@ -66,11 +102,8 @@ class _NicknameScreenState extends State<NicknameScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: _isButtonEnabled
-                    ? () {
-                  if (_nicknameController.text.isNotEmpty) {
-                    // 닉네임 저장 로직 추가
-                    Navigator.pop(context); // 저장 후 이전 화면으로 이동
-                  }
+                    ? () async {
+                  await _updateNickname(); // 닉네임 수정 요청
                 }
                     : null, // 입력이 완료되지 않으면 버튼 비활성화
                 style: ElevatedButton.styleFrom(
