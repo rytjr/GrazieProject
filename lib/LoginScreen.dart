@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/IdFindScreen.dart';
+import 'package:fluttertest/PasswordChangeScreen.dart';
+import 'package:fluttertest/PasswordFindScreen.dart';
 import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -148,6 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: () {
                       // 아이디 찾기 동작
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => IdFindScreen()),
+                      );
                     },
                     child: Text('아이디 찾기'),
                   ),
@@ -155,6 +162,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: () {
                       // 비밀번호 찾기 동작
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PasswordFindScreen()),
+                      );
                     },
                     child: Text('비밀번호 찾기'),
                   ),
@@ -162,6 +173,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   TextButton(
                     onPressed: () {
                       // 비밀번호 변경 동작
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => PasswordChangeScreen()),
+                      );
                     },
                     child: Text('비밀번호 변경'),
                   ),

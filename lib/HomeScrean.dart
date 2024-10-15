@@ -661,7 +661,7 @@ class _OrderContentState extends State<OrderContent> {
 
   void fetchProducts() async {
     try {
-      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
+      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/distinct/all');
       setState(() {
         products = response.data;
       });

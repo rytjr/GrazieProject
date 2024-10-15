@@ -77,10 +77,20 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
 
   // 이메일을 API로 전송
   void _sendEmailData() async {
-    SecureStorageService storageService = SecureStorageService();
-    String? token = await storageService.getToken();
     if (_isEmailValid) {
       final email = _emailController.text;
+
+      // 서버로 전송할 데이터를 준비
+      final requestData = {
+        'userId': widget.id,
+        'password': widget.password,
+        'email': email,
+        'name': widget.name,
+        'phone': widget.phone
+      };
+
+      // 전송할 데이터 출력 (디버깅용)
+      print('전송할 데이터: ${jsonEncode(requestData)}');
 
       try {
         final response = await http.post(
@@ -88,14 +98,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: jsonEncode({
-            'userId': widget.id,  // 여기서 'id'를 'userId'로 변경
-            'password': widget.password,
-            'email': email,
-            'name': widget.name,
-            'phone': widget.phone
-          }),
-
+          body: jsonEncode(requestData),
         );
 
         // 서버 응답 상태 코드 및 반환값 출력

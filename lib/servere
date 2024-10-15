@@ -559,3 +559,75 @@ if __name__ == '__main__':
     }
   }
 */
+
+/*I/flutter (32039): Product data: {name: 에스프레소, image: image/productImage/espresso.png, price: 2000, explanation: 진한 에스프레소, information: {calories: 1, saturatedFat: 0, protein: 0, sodium: 5, sugar: 0, caffeine: 63}, allergy: , category: Hot Coffee}
+  I/flutter (32039): Product data: {name: 아메리카노, image: image/productImage/americano.png, price: 2000, explanation: 깔끔한 맛의 아메리카노, information: {calories: 10, saturatedFat: 0, protein: 1, sodium: 10, sugar: 0, caffeine: 95}, allergy: , category: Hot Coffee}
+  I/flutter (32039): Product data: {name: 아메리카노, image: image/productImage/americano.png, price: 2300, explanation: 깔끔한 맛의 아메리카노, information: {calories: 10, saturatedFat: 0, protein: 1, sodium: 10, sugar: 0, caffeine: 95}, allergy: , category: Ice Coffee} 데이터가 이렇게 들어오고 class OrderContent extends StatefulWidget {
+    final int storeId; // 매장 ID
+    final String orderMode; // 매장이용 또는 To-Go 정보
+
+    // 생성자에서 storeId와 orderMode를 받도록 수정
+    OrderContent({required this.storeId, required this.orderMode});
+
+    @override
+    _OrderContentState createState() => _OrderContentState();
+  }
+
+  class _OrderContentState extends State<OrderContent> {
+    List<dynamic> products = [];
+    final ApiService apiService = ApiService();
+
+    @override
+    void initState() {
+      super.initState();
+      fetchProducts();
+    }
+
+    void fetchProducts() async {
+      try {
+        Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/distinct/all');
+        setState(() {
+          products = response.data;
+        });
+      } catch (e) {
+        print('Error: $e');
+      }
+    }
+
+    @override
+    Widget build(BuildContext context) {
+      return Scaffold(
+        body: products.isEmpty
+            ? Center(child: CircularProgressIndicator()) // 로딩 중일 때 표시
+            : ListView.builder(
+          itemCount: products.length,
+          itemBuilder: (context, index) {
+            print("Product data: ${products[index]}");
+            return ListTile(
+              leading: Image.network(
+                products[index]['image'],
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.error);
+                },
+              ),
+              title: Text(products[index]['name']),
+              subtitle: Text(products[index]['price'].toString()),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailScreen(
+                      product: products[index],  // 제품 정보 전달
+                      storeId: widget.storeId.toString(),  // storeId 전달
+                      orderOption: widget.orderMode,       // orderOption 전달 (매장 이용 또는 To-Go)
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      );
+    }
+  }여기서 리스트로 띄워주는 코든데 지금은 에스프레소는 hot하나만 있고 아메리카노는 categiry가 hot이랑ice로 두개가 들어와서 리스트에도 2개로 표시되는데 만약 메뉴 이름은 같은데 hot이랑 ice로 나누어진게 있으면 하나로 만들어서 리스트에는 하나만 보이게 하고 상세 페이지로 넘어갈 때 변수를 하나만들어서 hot인지 ice인지 both인지 같이 넘기는 코드로 수정해줘*/
