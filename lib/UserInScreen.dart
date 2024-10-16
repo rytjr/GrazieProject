@@ -71,15 +71,6 @@ class _UserInScreenState extends State<UserInScreen> {
                 decoration: InputDecoration(
                   labelText: '비밀번호 (10~20자리 이내, 특수문자 포함)',
                 ),
-                validator: (value) {
-                  if (value == null || value.length < 10 || value.length > 20) {
-                    return '비밀번호는 10~20자리여야 합니다.';
-                  }
-                  if (!RegExp(r'^(?=.*?[!@#\$&*~]).{10,}$').hasMatch(value)) {
-                    return '비밀번호에는 최소 한 개의 특수 문자가 포함되어야 합니다.';
-                  }
-                  return null;
-                },
               ),
               SizedBox(height: 10),
               TextFormField(
