@@ -398,7 +398,7 @@ class _CouponModalState extends State<CouponModal> {
 
   // 서버에서 쿠폰 데이터를 받아오는 함수
   void fetchCoupons() async {
-    final response = await http.get(Uri.parse('http://34.64.110.210:8080/coupon/read'));
+    final response = await http.get(Uri.parse('http://34.64.110.210:8080/api/coupons/list'));
 
     if (response.statusCode == 200) {
       setState(() {

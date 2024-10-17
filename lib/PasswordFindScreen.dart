@@ -109,13 +109,13 @@ class PasswordFindScreen extends StatelessWidget {
     String? token = await storageService.getToken();
 
     final response = await http.post(
-      Uri.parse('http://localhost:8080/users/changeTempPassword?token=$token'),
+      Uri.parse('http://34.64.110.210:8080/users/changeTempPassword?token=$token'),
       headers: {
         'Authorization': 'Bearer $token',
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       // 서버로부터 반환된 JSON 데이터에서 비밀번호를 추출
       final Map<String, dynamic> responseData = json.decode(response.body);
       final newPassword = responseData['newPassword']; // 서버에서 반환된 비밀번호

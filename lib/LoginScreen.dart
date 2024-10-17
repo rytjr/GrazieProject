@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertest/IdFindScreen.dart';
 import 'package:fluttertest/PasswordChangeScreen.dart';
 import 'package:fluttertest/PasswordFindScreen.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,6 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     final String id = _idController.text;
     final String password = _passwordController.text;
+    final SecureStorageService _storageService = SecureStorageService();
+    String? token = await _storageService.getToken();
 
     // 입력값이 없을 때 경고 메시지 표시
     if (id.isEmpty || password.isEmpty) {
@@ -31,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // API로 로그인 요청
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:8000/auth/login'), // localhost 대신 에뮬레이터용 IP 사용
+      Uri.parse('http://34.64.110.210:8080/auth/login'), // localhost 대신 에뮬레이터용 IP 사용
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'userid': id, 'password': password}), // 서버에서 기대하는 키 이름 확인
     );

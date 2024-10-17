@@ -105,7 +105,7 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
         print('응답 상태 코드: ${response.statusCode}');
         print('응답 본문: ${response.body}');
 
-        if (response.statusCode == 200) {
+        if (response.statusCode == 201) {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => LoginScreen()),

@@ -631,3 +631,25 @@ if __name__ == '__main__':
       );
     }
   }여기서 리스트로 띄워주는 코든데 지금은 에스프레소는 hot하나만 있고 아메리카노는 categiry가 hot이랑ice로 두개가 들어와서 리스트에도 2개로 표시되는데 만약 메뉴 이름은 같은데 hot이랑 ice로 나누어진게 있으면 하나로 만들어서 리스트에는 하나만 보이게 하고 상세 페이지로 넘어갈 때 변수를 하나만들어서 hot인지 ice인지 both인지 같이 넘기는 코드로 수정해줘*/
+
+  {
+    "productId": 0,
+    "name": "string",
+    "image": "string",
+    "smallPrice": 0,
+    "mediumPrice": 0,
+    "largePrice": 0,
+    "iceAble": true,
+    "hotAble": true,
+    "explanation": "string",
+    "information": {
+          "calories": 0,
+          "saturatedFat": 0,
+          "protein": 0,
+          "sodium": 0,
+          "sugar": 0,
+          "caffeine": 0
+        },
+    "allergy": "string",
+    "category": "string"
+  }

@@ -43,7 +43,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       // 비밀번호 변경 성공 모달 띄우기
       _showResultModal('비밀번호가 변경되었습니다.', true);
     } else {
