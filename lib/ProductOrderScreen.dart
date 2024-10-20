@@ -10,14 +10,14 @@ class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
   final String storeId;  // 매장 ID 추가
   final String orderOption;  // 매장이용 or To-Go 추가
+  final String selectedTemperature; // 선택한 온도 추가
 
-  // 생성자에서 product, storeId, orderOption을 받도록 수정
   ProductOrderScreen({
     required this.product,
-    required this.storeId,  // 매장 ID 받기
-    required this.orderOption,  // 매장이용 or To-Go 받기
+    required this.storeId,
+    required this.orderOption,
+    required this.selectedTemperature,
   });
-
 
   @override
   _ProductOrderScreenState createState() => _ProductOrderScreenState();
@@ -25,11 +25,111 @@ class ProductOrderScreen extends StatefulWidget {
 
 class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int quantity = 1;
-  String selectedCup = "Solo"; // 기본 선택된 컵 옵션
-  String orderMode = "매장"; // 기본 주문 형태 (매장 or 테이크아웃)
-  int storeId = 1; // 매장 ID (예시)
-  int userId = 2; // 사용자 ID (예시)
-  int? couponId; // 사용한 쿠폰 ID (nullable)
+  String selectedSize = "Small"; // 기본 선택된 사이즈 옵션
+  int storeId = 1;
+  int userId = 2;
+  int? couponId;
+
+  // 퍼스널 옵션 기본값 설정
+  String selectedIce = "NORMAL"; // 얼음 옵션
+  String selectedTumbler = "NOT_USE"; // 텀블러 사용 여부
+
+  int shotAddition = 0; // 샷 추가 기본값
+  int pearlAddition = 0; // 펄 추가 기본값
+  int syrupAddition = 0; // 시럽 추가 기본값
+  int sugarAddition = 0; // 설탕 추가 기본값
+  int whippedCreamAddition = 0; // 휘핑크림 추가 기본값
+
+  Future<void> _addToCart() async {
+    final url = Uri.parse('http://34.64.110.210:8080/cart/add');
+
+    // 서버로 보낼 데이터 생성
+    final body = {
+      "productId": widget.product['id'], // product ID
+      "size": selectedSize.toLowerCase(), // small, medium, large 등을 소문자로 전송
+      "temperature": widget.selectedTemperature.toLowerCase(), // ice, hot
+      "quantity": quantity,
+      "personalOptions": {
+        "concentration": "LIGHT", // 농도는 기본값
+        "shotAddition": shotAddition,
+        "personalTumbler": selectedTumbler,
+        "pearlAddition": pearlAddition,
+        "syrupAddition": syrupAddition,
+        "sugarAddition": sugarAddition,
+        "whippedCreamAddition": whippedCreamAddition,
+        "iceAddition": selectedIce
+      }
+    };
+
+    try {
+      // POST 요청 보내기
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body), // 데이터를 JSON으로 변환하여 전송
+      );
+
+      // 서버 응답 확인
+      if (response.statusCode == 200) {
+        // 성공적으로 추가된 경우
+        print('Cart item added successfully');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('장바구니에 추가되었습니다.')),
+        );
+      } else {
+        // 서버 에러 응답 처리
+        print('Failed to add item to cart: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('장바구니 추가 실패: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      // 네트워크 에러 처리
+      print('Error occurred while adding to cart: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('장바구니 추가 중 오류 발생')),
+      );
+    }
+  }
+
+  // 요구사항을 저장하는 상태 변수
+  String specialRequest = "";
+
+  // 각 사이즈에 따른 가격을 계산
+  int _getBasePrice() {
+    switch (selectedSize) {
+      case "Small":
+        return widget.product['smallPrice'];
+      case "Medium":
+        return widget.product['mediumPrice'];
+      case "Large":
+        return widget.product['largePrice'];
+      default:
+        return widget.product['smallPrice'];
+    }
+  }
+
+  // 추가 가격 계산 (샷, 펄, 시럽, 설탕 추가 및 텀블러 사용에 따른 할인 적용)
+  int _calculateAdditionalPrice() {
+    int additionalPrice = 0;
+
+    additionalPrice += shotAddition * 500; // 샷당 500원 추가
+    additionalPrice += pearlAddition * 700; // 펄 추가시 700원 추가
+    additionalPrice += syrupAddition * 200; // 시럽 추가시 200원 추가
+    additionalPrice += sugarAddition * 200; // 설탕 추가시 200원 추가
+    additionalPrice += whippedCreamAddition * 700; // 휘핑크림 추가시 700원 추가
+
+    if (selectedTumbler == "USE") {
+      additionalPrice -= 300; // 텀블러 사용시 300원 할인
+    }
+
+    return additionalPrice;
+  }
+
+  // 총 가격 계산 (기본 가격 + 추가 가격)
+  int _getTotalPrice() {
+    return (_getBasePrice() + _calculateAdditionalPrice()) * quantity;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +151,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
             ),
             SizedBox(height: 20),
             Text(
-              "컵 선택",
+              "사이즈 선택",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -61,29 +161,12 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
             SizedBox(height: 10),
             Row(
               children: [
-                _buildCupOption("Solo", "22ml"),
+                _buildSizeOption("Small", widget.product['smallPrice']),
                 SizedBox(width: 10),
-                _buildCupOption("Doppio", "44ml"),
+                _buildSizeOption("Medium", widget.product['mediumPrice']),
+                SizedBox(width: 10),
+                _buildSizeOption("Large", widget.product['largePrice']),
               ],
-            ),
-            SizedBox(height: 20),
-            Container(
-              padding: EdgeInsets.all(10),
-              color: Colors.green[100],
-              child: Row(
-                children: [
-                  Checkbox(
-                    value: false,
-                    onChanged: (bool? value) {},
-                  ),
-                  Expanded(
-                    child: Text(
-                      "환경을 위해 친환경 캠페인에 동참해 보세요.\n개인컵 사용하기",
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
             ),
             SizedBox(height: 20),
             ListTile(
@@ -96,9 +179,25 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               ),
               trailing: Icon(Icons.arrow_forward_ios),
               onTap: () {
-                // 퍼스널 옵션 선택 화면으로 이동
+                _showPersonalOptionModal(context);
               },
             ),
+            SizedBox(height: 10),
+
+            // 요구사항 입력 필드 추가
+            TextField(
+              decoration: InputDecoration(
+                labelText: "추가 요구사항을 적어주세요",
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+              onChanged: (value) {
+                setState(() {
+                  specialRequest = value; // 입력된 요구사항을 저장
+                });
+              },
+            ),
+
             Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -130,7 +229,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   ],
                 ),
                 Text(
-                  "${widget.product['price'] * quantity}원",
+                  "${_getTotalPrice()}원",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -139,12 +238,13 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               ],
             ),
             SizedBox(height: 10),
+
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      // 담기 버튼 눌렸을 때 모달 창 표시
+                      _addToCart();
                       _showModalBottomSheet(context);
                     },
                     style: OutlinedButton.styleFrom(
@@ -164,7 +264,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      // 주문하기 버튼 눌렸을 때 PaymentScreen으로 데이터 전달
+                      // 주문하기 버튼을 눌렀을 때 PaymentScreen으로 데이터 전달 (요구사항 포함)
+                      _addToCart();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -173,7 +274,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                             storeId: widget.storeId,
                             orderOption: widget.orderOption,
                             quantity: quantity,
-                            selectedCup: selectedCup,
+                            selectedCup: selectedSize,
+                            specialRequest: specialRequest,  // 요구사항 전달
                           ),
                         ),
                       );
@@ -201,14 +303,15 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
-  Widget _buildCupOption(String title, String subtitle) {
-    bool isSelected = selectedCup == title;
+  // 사이즈 옵션 위젯 빌드
+  Widget _buildSizeOption(String title, int price) {
+    bool isSelected = selectedSize == title;
 
     return Expanded(
       child: GestureDetector(
         onTap: () {
           setState(() {
-            selectedCup = title;
+            selectedSize = title;
           });
         },
         child: Container(
@@ -230,7 +333,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               ),
               SizedBox(height: 5),
               Text(
-                subtitle,
+                "${price}원",
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black,
                 ),
@@ -239,6 +342,190 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // 퍼스널 옵션 모달 창
+  void _showPersonalOptionModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 16.0),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return Container(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 뒤로가기 버튼
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: IconButton(
+                        icon: Icon(Icons.arrow_back),
+                        onPressed: () {
+                          Navigator.pop(context); // 모달 닫기
+                        },
+                      ),
+                    ),
+                    Text(
+                      "퍼스널 옵션",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    _buildOptionSection(
+                      "샷 추가",
+                      shotAddition,
+                          (value) {
+                        setModalState(() {
+                          shotAddition = value;
+                        });
+                        setState(() {}); // 업데이트 후 가격 반영
+                      },
+                    ),
+                    _buildOptionSection(
+                      "펄 추가",
+                      pearlAddition,
+                          (value) {
+                        setModalState(() {
+                          pearlAddition = value;
+                        });
+                        setState(() {}); // 업데이트 후 가격 반영
+                      },
+                    ),
+                    _buildOptionSection(
+                      "설탕 추가",
+                      sugarAddition,
+                          (value) {
+                        setModalState(() {
+                          sugarAddition = value;
+                        });
+                        setState(() {}); // 업데이트 후 가격 반영
+                      },
+                    ),
+                    _buildOptionSection(
+                      "휘핑크림 추가",
+                      whippedCreamAddition,
+                          (value) {
+                        setModalState(() {
+                          whippedCreamAddition = value;
+                        });
+                        setState(() {}); // 업데이트 후 가격 반영
+                      },
+                    ),
+                    _buildHorizontalRadioOption(
+                      "얼음",
+                      selectedIce,
+                      ["NONE", "LESS", "NORMAL", "MORE"],
+                          (value) {
+                        setModalState(() {
+                          selectedIce = value!;
+                        });
+                        setState(() {});
+                      },
+                    ),
+                    _buildHorizontalRadioOption(
+                      "텀블러 사용 여부",
+                      selectedTumbler,
+                      ["USE", "NOT_USE"],
+                          (value) {
+                        setModalState(() {
+                          selectedTumbler = value!;
+                        });
+                        setState(() {}); // 업데이트 후 가격 반영
+                      },
+                    ),
+
+                    SizedBox(height: 10),
+
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context); // 모달 닫기
+                      },
+                      child: Text("확인"),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionSection(String title, int count, Function(int) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            IconButton(
+              onPressed: () {
+                if (count > 0) {
+                  onChanged(count - 1);
+                }
+              },
+              icon: Icon(Icons.remove),
+            ),
+            Text(
+              count.toString(),
+              style: TextStyle(fontSize: 18),
+            ),
+            IconButton(
+              onPressed: () {
+                onChanged(count + 1);
+              },
+              icon: Icon(Icons.add),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 가로로 배치된 라디오 버튼 그룹 (얼음 옵션 및 텀블러 사용 여부)
+  Widget _buildHorizontalRadioOption(String title, String selectedValue, List<String> options, Function(String?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.blue,
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: options.map((String option) {
+            return Row(
+              children: [
+                Radio<String>(
+                  value: option,
+                  groupValue: selectedValue,
+                  onChanged: onChanged,
+                ),
+                Text(option),
+              ],
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -293,9 +580,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                           builder: (context) =>
                               OrderContent(
                                 storeId: int.parse(widget.storeId),
-                                // 매장 ID를 int로 변환하여 전달
-                                orderMode: widget
-                                    .orderOption, // 매장이용 or To-Go 정보 전달
+                                orderMode: widget.orderOption,
                               ),
                         ),
                       );

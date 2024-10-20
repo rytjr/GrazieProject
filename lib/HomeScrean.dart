@@ -368,17 +368,18 @@ class _HomeContentState extends State<HomeContent> {
   void checkLoginStatus() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
-
+    print('toekb');
+    print(token);
     if (token != null) {
       try {
         // dio.Response로 변경하여 Dio 패키지를 활용한 getRequest 호출
         Response response = await apiService.getRequest(
-          'http://34.64.110.210:8080/users/readProflie',
+          'http://34.64.110.210:8080/api/user-info',
           headers: {
             'Authorization': 'Bearer $token',
           },
         );
-
+        print('resss' + response.data);
         if (response.statusCode == 200) {
           setState(() {
             isLoggedIn = true;
@@ -443,7 +444,7 @@ class _HomeContentState extends State<HomeContent> {
                         SizedBox(height: 8),
                         Text(products[index]['name'],
                             style: TextStyle(fontSize: 16)),
-                        Text('${products[index]['price']}원',
+                        Text('${products[index]['smallPrice']}원',
                             style: TextStyle(fontSize: 14)),
                       ],
                     ),
@@ -661,7 +662,7 @@ class _OrderContentState extends State<OrderContent> {
 
   void fetchProducts() async {
     try {
-      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/distinct/all');
+      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
       });
@@ -688,7 +689,7 @@ class _OrderContentState extends State<OrderContent> {
               },
             ),
             title: Text(products[index]['name']),
-            subtitle: Text(products[index]['price'].toString()),
+            subtitle: Text(products[index]['smallPrice'].toString()),
             onTap: () {
               Navigator.push(
                 context,

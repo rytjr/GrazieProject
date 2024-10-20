@@ -13,14 +13,15 @@ class PaymentScreen extends StatefulWidget {
   final String orderOption;  // 매장이용 or To-Go
   final int quantity;
   final String selectedCup;
+  final String? specialRequest; // 요구사항 추가
 
-  // 생성자에서 데이터를 전달받도록 수정
   PaymentScreen({
     required this.product,
     required this.storeId,
     required this.orderOption,
     required this.quantity,
     required this.selectedCup,
+    this.specialRequest, // optional 매개변수로 추가
   });
 
   @override
@@ -42,7 +43,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   Future<void> fetchOrderData() async {
     final response = await http.get(Uri.parse('http://34.64.110.210:8080/cart/items'));
-
+    print('order' + response.body);
     if (response.statusCode == 200) {
       setState(() {
         orders = json.decode(response.body);
@@ -58,6 +59,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   int calculateTotalPrice() {
     return orders.fold(0, (sum, item) => sum + (item['price'] as int? ?? 0) * (item['quantity'] as int? ?? 0));
+  }
+
+  Future<void> checkPaymentProgress(String impUid) async {
+    final url = 'http://34.64.110.210:8080/api/pay/progress/$impUid';  // imp_uid를 URL에 추가
+
+    try {
+      final response = await http.post(Uri.parse(url));  // POST 요청 보내기
+
+      if (response.statusCode == 200) {
+        // 요청이 성공한 경우 처리
+        print('결제 진행 상태: ${response.body}');
+      } else {
+        // 요청이 실패한 경우 처리
+        print('결제 진행 상태 확인 실패: ${response.statusCode}, ${response.body}');
+      }
+    } catch (e) {
+      // 예외 처리
+      print('오류 발생: $e');
+    }
   }
 
   // 결제 요청을 보내는 메서드
@@ -319,7 +339,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           );
           // 결제 결과 처리
           if (result != null) {
-            // _handlePaymentResult(result);
+            print("imp" + result);
+            final impUid = result['imp_uid'];
+            checkPaymentProgress(impUid);
+
           }
         },
         style: ElevatedButton.styleFrom(
@@ -330,55 +353,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 }
-
-// // 결제 실패 시 오류 메시지를 보여주는 함수
-// void _showErrorDialog(String message) {
-//   showDialog(
-//     context: context,
-//     builder: (context) {
-//       return AlertDialog(
-//         title: Text('결제 실패'),
-//         content: Text(message),
-//         actions: [
-//           TextButton(
-//             onPressed: () {
-//               Navigator.pop(context); // 다이얼로그 닫기
-//             },
-//             child: Text('확인'),
-//           ),
-//         ],
-//       );
-//     },
-//   );
-// }
-//
-// // 결제 성공 또는 실패 시 호출되는 함수
-// void _handlePaymentResult(Map<String, String> result) {
-//   if (result['success'] == 'true') {
-//     // 결제 성공 처리
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: Text('결제 성공'),
-//           content: Text('결제가 성공적으로 완료되었습니다.'),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context); // 다이얼로그 닫기
-//               },
-//               child: Text('확인'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   } else {
-//     // 결제 실패 처리
-//     _showErrorDialog('결제에 실패했습니다. 다시 시도해 주세요.');
-//   }
-// }
-
 
 // 쿠폰 모달 화면
 class CouponModal extends StatefulWidget {
@@ -400,7 +374,7 @@ class _CouponModalState extends State<CouponModal> {
   void fetchCoupons() async {
     final response = await http.get(Uri.parse('http://34.64.110.210:8080/api/coupons/list'));
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       setState(() {
         coupons = json.decode(response.body);
         isLoading = false;

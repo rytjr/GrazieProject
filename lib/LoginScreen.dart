@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // API로 로그인 요청
     final response = await http.post(
-      Uri.parse('http://34.64.110.210:8080/auth/login'), // localhost 대신 에뮬레이터용 IP 사용
+      Uri.parse('http://34.64.110.210:8080/auth/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'userid': id, 'password': password}), // 서버에서 기대하는 키 이름 확인
     );

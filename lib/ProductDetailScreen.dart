@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/ProductOrderScreen.dart';
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
   final String storeId;  // 매장 ID 추가
   final String orderOption;  // 매장이용 or To-Go 추가
@@ -13,10 +13,17 @@ class ProductDetailScreen extends StatelessWidget {
   });
 
   @override
+  _ProductDetailScreenState createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
+  String? selectedTemperature;  // 사용자가 선택한 온도를 저장할 변수
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(product['name'] ?? '상품 이름 없음'),
+        title: Text(widget.product['name'] ?? '상품 이름 없음'),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -26,7 +33,7 @@ class ProductDetailScreen extends StatelessWidget {
             children: [
               // 이미지 영역
               Image.network(
-                product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
+                widget.product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
                 width: double.infinity,
                 height: 190,
                 fit: BoxFit.cover,
@@ -38,7 +45,7 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  product['name'] ?? '이름 없음',
+                  widget.product['name'] ?? '이름 없음',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
@@ -49,7 +56,7 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  product['explanation'] ?? '설명 없음',
+                  widget.product['explanation'] ?? '설명 없음',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey,
@@ -60,18 +67,18 @@ class ProductDetailScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  '${product['price'] ?? 0}원',
+                  '${widget.product['smallPrice'] ?? 0}원',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              // 온도 선택 버튼
+              // 온도 선택 버튼 (iceAble, hotAble 기반)
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 13, 22, 0),
                 child: Row(
-                  children: _buildTemperatureButtons(product['temperature'] ?? 'both'),
+                  children: _buildTemperatureButtons(widget.product['iceAble'] ?? false, widget.product['hotAble'] ?? false),
                 ),
               ),
               // 추가 설명
@@ -103,14 +110,17 @@ class ProductDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: () {
+                        onPressed: selectedTemperature == null
+                            ? null // 온도를 선택하지 않으면 버튼 비활성화
+                            : () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ProductOrderScreen(
-                                product: product,
-                                storeId: storeId,  // 매장 ID 전달
-                                orderOption: orderOption,  // 매장이용 or To-Go 전달
+                                product: widget.product,
+                                storeId: widget.storeId,  // 매장 ID 전달
+                                orderOption: widget.orderOption,  // 매장이용 or To-Go 전달
+                                selectedTemperature: selectedTemperature!,  // 선택된 온도 전달
                               ),
                             ),
                           );
@@ -141,65 +151,11 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildTemperatureButtons(String temperature) {
+  // iceAble, hotAble에 따라 버튼 생성
+  List<Widget> _buildTemperatureButtons(bool iceAble, bool hotAble) {
     List<Widget> buttons = [];
 
-    if (temperature == 'ice') {
-      buttons.add(
-        SizedBox(
-          height: 32,
-          child: OutlinedButton(
-            onPressed: () {
-              // ICE 버튼이 눌렸을 때의 동작
-            },
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.brown),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: Text(
-              "ICE ONLY",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (temperature == 'hot') {
-      buttons.add(
-        SizedBox(
-          width: double.infinity,
-          height: 32,
-          child: OutlinedButton(
-            onPressed: () {
-              // HOT 버튼이 눌렸을 때의 동작
-            },
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: Colors.brown),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(5),
-              ),
-            ),
-            child: Text(
-              "HOT ONLY",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (temperature == 'both') {
+    if (iceAble) {
       buttons.add(
         Expanded(
           child: Padding(
@@ -209,10 +165,12 @@ class ProductDetailScreen extends StatelessWidget {
               height: 32,
               child: OutlinedButton(
                 onPressed: () {
-                  // ICE 버튼이 눌렸을 때의 동작
+                  setState(() {
+                    selectedTemperature = 'ICE';  // ICE 선택
+                  });
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.brown),
+                  side: BorderSide(color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown),  // 선택된 버튼 강조
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -222,7 +180,7 @@ class ProductDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown,
+                    color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown,  // 선택된 텍스트 강조
                   ),
                 ),
               ),
@@ -230,7 +188,9 @@ class ProductDetailScreen extends StatelessWidget {
           ),
         ),
       );
+    }
 
+    if (hotAble) {
       buttons.add(
         Expanded(
           child: Padding(
@@ -240,10 +200,12 @@ class ProductDetailScreen extends StatelessWidget {
               height: 32,
               child: OutlinedButton(
                 onPressed: () {
-                  // HOT 버튼이 눌렸을 때의 동작
+                  setState(() {
+                    selectedTemperature = 'HOT';  // HOT 선택
+                  });
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: Colors.brown),
+                  side: BorderSide(color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown),  // 선택된 버튼 강조
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -253,7 +215,7 @@ class ProductDetailScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.brown,
+                    color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown,  // 선택된 텍스트 강조
                   ),
                 ),
               ),
