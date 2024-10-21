@@ -47,6 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
         _showErrorModal('아이디 혹은 비밀번호를 잘못 입력하셨습니다.');
       } else {
         // 로그인 성공 - 토큰 저장 후 HomeScreen으로 이동
+        print('응답 본문: ${response.body}');
         await _saveTokens(responseData['accessToken'], responseData['refreshToken']);
         Navigator.pushReplacement(
           context,
@@ -63,8 +64,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // SecureStorage에 토큰 저장
   Future<void> _saveTokens(String accessToken, String refreshToken) async {
-    await _storage.write(key: 'accessToken', value: accessToken);
-    await _storage.write(key: 'refreshToken', value: refreshToken);
+    final SecureStorageService storageService = SecureStorageService();
+    await storageService.saveToken(accessToken);
+    await storageService.saveToken(refreshToken);
   }
 
   // 로그인 실패 시 모달창 띄우기

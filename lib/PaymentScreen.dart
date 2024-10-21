@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/CashScreen.dart';
 import 'package:fluttertest/PaymentWebView.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/impart.dart';
 import 'package:http/http.dart' as http;
 import 'package:webview_flutter/webview_flutter.dart';
@@ -32,8 +33,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   List<dynamic> orders = [];
   bool _isExpanded = false;
   bool isLoading = true;
-  final _storage = FlutterSecureStorage(); // SecureStorage 초기화
   late String pageUrl;
+  String? selectedCouponId; // 선택된 쿠폰 ID
 
   @override
   void initState() {
@@ -42,7 +43,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Future<void> fetchOrderData() async {
-    final response = await http.get(Uri.parse('http://34.64.110.210:8080/cart/items'));
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/cart/items'),
+      headers: {
+        'Authorization': 'Bearer $token'
+      },
+    );
     print('order' + response.body);
     if (response.statusCode == 200) {
       setState(() {
@@ -102,6 +110,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       _showErrorDialog('결제 요청 중 오류가 발생했습니다.');
     }
   }
+
   // 결제 페이지를 WebView로 열기
   void _showPaymentWebView(String pageUrl) {
     Navigator.push(
@@ -120,6 +129,65 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
+  // 주문 데이터를 생성하는 메서드
+  Map<String, dynamic> createOrderData() {
+    return {
+      "orderCreateDTO": {
+        "order_date": DateTime.now().toIso8601String(),
+        "order_mode": widget.orderOption,
+        "requirement": widget.specialRequest ?? '',
+        "store_id": int.parse(widget.storeId),
+        "user_id": 1, // 예시로 사용자 ID를 1로 설정
+      },
+      "orderItemsCreateDTOS": orders.map((order) {
+        final personalOptions = order['personalOptions'];
+        return {
+          "productId": order['productId'] ?? 0,
+          "productPrice": order['price'],
+          "quantity": order['quantity'],
+          "size": order['size'],
+          "temperature": order['temperature'],
+          "couponId": selectedCouponId != null ? int.parse(selectedCouponId!) : 0, // 선택된 쿠폰 ID
+          "concentration": personalOptions['concentration'],
+          "shotAddition": personalOptions['shotAddition'],
+          "personalTumbler": personalOptions['personalTumbler'],
+          "pearlAddition": personalOptions['pearlAddition'],
+          "syrupAddition": personalOptions['syrupAddition'],
+          "sugarAddition": personalOptions['sugarAddition'],
+          "whippedCreamAddition": personalOptions['whippedCreamAddition'],
+          "iceAddition": personalOptions['iceAddition']
+        };
+      }).toList(),
+    };
+  }
+
+  // 주문 생성 API 호출
+  Future<void> submitOrder() async {
+    try {
+      SecureStorageService storageService = SecureStorageService();
+      String? token = await storageService.getToken();
+
+      final url = 'http://34.64.110.210:8080/api/order/create';
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      };
+
+      final body = jsonEncode(createOrderData());
+      final response = await http.post(Uri.parse(url), headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        print('주문 성공: ${response.body}');
+        // 주문 성공 처리 로직 추가
+      } else {
+        print('주문 실패: ${response.statusCode}, ${response.body}');
+        _showErrorDialog('주문에 실패했습니다. 다시 시도해 주세요.');
+      }
+    } catch (e) {
+      print('오류 발생: $e');
+      _showErrorDialog('주문 중 오류가 발생했습니다.');
+    }
+  }
 
   // 결제 실패 다이얼로그
   void _showErrorDialog(String message) {
@@ -141,6 +209,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -268,9 +337,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       trailing: Icon(Icons.arrow_forward_ios),
-      onTap: () {
-        // 쿠폰 사용 모달창 표시
-        showModalBottomSheet(
+      onTap: () async {
+        // 쿠폰 사용 모달창 표시하고 선택한 쿠폰의 ID 받기
+        final selectedCoupon = await showModalBottomSheet<String>(
           context: context,
           isScrollControlled: true,
           builder: (BuildContext context) {
@@ -280,6 +349,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
             );
           },
         );
+
+        if (selectedCoupon != null) {
+          setState(() {
+            selectedCouponId = selectedCoupon; // 선택된 쿠폰 ID 저장
+          });
+        }
       },
     );
   }
@@ -342,7 +417,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             print("imp" + result);
             final impUid = result['imp_uid'];
             checkPaymentProgress(impUid);
-
           }
         },
         style: ElevatedButton.styleFrom(
@@ -362,44 +436,84 @@ class CouponModal extends StatefulWidget {
 
 class _CouponModalState extends State<CouponModal> {
   List<dynamic> coupons = [];
+  List<dynamic> orders = []; // orders 변수 선언
   bool isLoading = true;
+  String? selectedCouponId; // 선택된 쿠폰 ID를 저장하는 변수
 
   @override
   void initState() {
     super.initState();
-    fetchCoupons(); // super.initState() 호출 추가
+    fetchOrderData(); // 바로 비동기 호출을 할 수 있도록 변경
   }
 
-  // 서버에서 쿠폰 데이터를 받아오는 함수
-  void fetchCoupons() async {
-    final response = await http.get(Uri.parse('http://34.64.110.210:8080/api/coupons/list'));
+  Future<void> fetchOrderData() async {
+    setState(() {
+      isLoading = true;
+    });
 
-    if (response.statusCode == 201) {
-      setState(() {
-        coupons = json.decode(response.body);
-        isLoading = false;
-      });
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    print(token);
+    if (token != null) {
+      try {
+        final response = await http.get(
+          Uri.parse('http://34.64.110.210:8080/cart/items'),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+        print('order' + response.body);
+
+        if (response.statusCode == 200) {
+          setState(() {
+            orders = json.decode(response.body);
+            isLoading = false;
+          });
+        } else {
+          throw Exception('Failed to load orders');
+        }
+      } catch (e) {
+        print('Error: $e');
+        setState(() {
+          isLoading = false;
+        });
+      }
     } else {
+      // 토큰이 없을 경우 처리 (로그아웃 상태)
+      print("No token found");
       setState(() {
         isLoading = false;
       });
-      throw Exception('Failed to load coupons');
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('쿠폰'),
-        centerTitle: true,
+        title: Text('쿠폰 선택'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context, selectedCouponId); // 선택된 쿠폰 ID 반환
+            },
+            child: Text('선택 완료', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : ListView.builder(
         itemCount: coupons.length,
         itemBuilder: (context, index) {
-          return CouponCard(coupon: coupons[index]);
+          return CouponCard(
+            coupon: coupons[index],
+            isSelected: selectedCouponId == coupons[index]['id'],
+            onSelected: (String couponId) {
+              setState(() {
+                selectedCouponId = couponId; // 선택된 쿠폰 ID 업데이트
+              });
+            },
+          );
         },
       ),
     );
@@ -408,46 +522,55 @@ class _CouponModalState extends State<CouponModal> {
 
 class CouponCard extends StatelessWidget {
   final dynamic coupon;
+  final bool isSelected; // 선택 여부
+  final ValueChanged<String> onSelected;
 
-  const CouponCard({required this.coupon});
+  const CouponCard({
+    required this.coupon,
+    required this.isSelected,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.grey.shade300),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${coupon['discountRate']}% 할인',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '${coupon['description']}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '기간 ${coupon['expirationDate']}',
-              style: TextStyle(fontSize: 14, color: Colors.red),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: Icon(Icons.cloud_download, color: Colors.blue),
-                onPressed: () {
-                  // 다운로드 아이콘 클릭 시 동작 추가 가능
-                },
+    return GestureDetector(
+      onTap: () {
+        onSelected(coupon['id']); // 쿠폰이 선택되면 ID 반환
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: isSelected ? Colors.blue : Colors.grey.shade300), // 선택된 쿠폰 강조
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${coupon['name']} 쿠폰',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              SizedBox(height: 8),
+              Text(
+                '${coupon['description']}',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '기간 ${coupon['expirationDate']}',
+                style: TextStyle(fontSize: 14, color: Colors.red),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Icon(
+                  isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+                  color: isSelected ? Colors.blue : Colors.grey,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

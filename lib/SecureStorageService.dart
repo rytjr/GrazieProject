@@ -5,6 +5,7 @@ class SecureStorageService {
 
   Future<void> saveToken(String token) async {
     await _storage.write(key: 'jwt_token', value: token);
+    print('토큰 저장 완료: $token');
   }
 
   Future<String?> getToken() async {

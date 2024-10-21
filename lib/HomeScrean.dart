@@ -344,14 +344,17 @@ class HomeContent extends StatefulWidget {
 class _HomeContentState extends State<HomeContent> {
   List<dynamic> products = [];
   bool isLoggedIn = false; // 로그인 상태를 확인하는 변수
-  String userName = ''; // 사용자 이름 저장 변수
+  String userName = ''; // 사용자 이름 저장 변수'
   final ApiService apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
-    checkLoginStatus(); // 로그인 상태 확인 먼저 실행
-    fetchProducts();
+    Future.delayed(Duration.zero, () {
+
+      fetchProducts();
+      checkLoginStatus();  // 로그인 상태 확인 먼저 실행
+    });
   }
 
   void fetchProducts() async {
@@ -371,19 +374,21 @@ class _HomeContentState extends State<HomeContent> {
     print('toekb');
     print(token);
     if (token != null) {
+      print(30030);
       try {
-        // dio.Response로 변경하여 Dio 패키지를 활용한 getRequest 호출
-        Response response = await apiService.getRequest(
-          'http://34.64.110.210:8080/api/user-info',
+        final response = await http.get(Uri.parse(
+          'http://34.64.110.210:8080/profile'),
           headers: {
             'Authorization': 'Bearer $token',
           },
         );
-        print('resss' + response.data);
+        print('Response status: ${response.statusCode}');
+        print(response.statusCode);
         if (response.statusCode == 200) {
+          final Map<String, dynamic> data = jsonDecode(response.body);
           setState(() {
             isLoggedIn = true;
-            userName = response.data['name']; // 서버에서 반환된 name 값을 가져옴
+            userName = data['name']; // 서버에서 반환된 name 값을 가져옴
           });
         } else {
           setState(() {

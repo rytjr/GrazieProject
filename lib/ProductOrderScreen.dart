@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertest/PaymentScreen.dart';
 import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'package:fluttertest/HomeScrean.dart';
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 토큰 저장/가져오기 위한 패키지
 import 'package:intl/intl.dart'; // 날짜 형식을 맞추기 위해 추가
 
 class ProductOrderScreen extends StatefulWidget {
@@ -11,6 +13,7 @@ class ProductOrderScreen extends StatefulWidget {
   final String storeId;  // 매장 ID 추가
   final String orderOption;  // 매장이용 or To-Go 추가
   final String selectedTemperature; // 선택한 온도 추가
+
 
   ProductOrderScreen({
     required this.product,
@@ -29,6 +32,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int storeId = 1;
   int userId = 2;
   int? couponId;
+  final _storage = FlutterSecureStorage(); // SecureStorage 초기화
 
   // 퍼스널 옵션 기본값 설정
   String selectedIce = "NORMAL"; // 얼음 옵션
@@ -41,11 +45,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int whippedCreamAddition = 0; // 휘핑크림 추가 기본값
 
   Future<void> _addToCart() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    print('toekb');
     final url = Uri.parse('http://34.64.110.210:8080/cart/add');
 
     // 서버로 보낼 데이터 생성
     final body = {
-      "productId": widget.product['id'], // product ID
+      "productId": widget.product['productId'].toString(), // product ID
       "size": selectedSize.toLowerCase(), // small, medium, large 등을 소문자로 전송
       "temperature": widget.selectedTemperature.toLowerCase(), // ice, hot
       "quantity": quantity,
@@ -65,10 +72,13 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       // POST 요청 보내기
       final response = await http.post(
         url,
-        headers: {"Content-Type": "application/json"},
+        headers: {
+          'Authorization': 'Bearer $token'
+        },
         body: jsonEncode(body), // 데이터를 JSON으로 변환하여 전송
       );
-
+      print(body);
+      print(token);
       // 서버 응답 확인
       if (response.statusCode == 200) {
         // 성공적으로 추가된 경우
