@@ -13,6 +13,7 @@ class ProductOrderScreen extends StatefulWidget {
   final String storeId;  // 매장 ID 추가
   final String orderOption;  // 매장이용 or To-Go 추가
   final String selectedTemperature; // 선택한 온도 추가
+  final String tk;
 
 
   ProductOrderScreen({
@@ -20,6 +21,7 @@ class ProductOrderScreen extends StatefulWidget {
     required this.storeId,
     required this.orderOption,
     required this.selectedTemperature,
+    required this.tk,
   });
 
   @override
@@ -33,6 +35,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int userId = 2;
   int? couponId;
   final _storage = FlutterSecureStorage(); // SecureStorage 초기화
+
 
   // 퍼스널 옵션 기본값 설정
   String selectedIce = "NORMAL"; // 얼음 옵션
@@ -73,11 +76,12 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       final response = await http.post(
         url,
         headers: {
-          'Authorization': 'Bearer $token'
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk'
         },
-        body: jsonEncode(body), // 데이터를 JSON으로 변환하여 전송
+        body: jsonEncode(body),
       );
-      print(body);
+      print('haha ${response.statusCode}');
       print(token);
       // 서버 응답 확인
       if (response.statusCode == 200) {
@@ -286,6 +290,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                             quantity: quantity,
                             selectedCup: selectedSize,
                             specialRequest: specialRequest,  // 요구사항 전달
+                            tk : widget.tk,
                           ),
                         ),
                       );
