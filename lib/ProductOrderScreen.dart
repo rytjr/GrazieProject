@@ -34,6 +34,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int storeId = 1;
   int userId = 2;
   int? couponId;
+  int orderprice = 0;
   final _storage = FlutterSecureStorage(); // SecureStorage 초기화
 
 
@@ -46,6 +47,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int syrupAddition = 0; // 시럽 추가 기본값
   int sugarAddition = 0; // 설탕 추가 기본값
   int whippedCreamAddition = 0; // 휘핑크림 추가 기본값
+  int keypoint = 0;
 
   Future<void> _addToCart() async {
     SecureStorageService storageService = SecureStorageService();
@@ -279,7 +281,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   child: ElevatedButton(
                     onPressed: () {
                       // 주문하기 버튼을 눌렀을 때 PaymentScreen으로 데이터 전달 (요구사항 포함)
-                      _addToCart();
+                      keypoint =1;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -291,6 +293,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                             selectedCup: selectedSize,
                             specialRequest: specialRequest,  // 요구사항 전달
                             tk : widget.tk,
+                            keypoint : keypoint,
+                            orderprice : _getTotalPrice(),
                           ),
                         ),
                       );
@@ -577,7 +581,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ShoppingCartScreen()),
+                            builder: (context) => ShoppingCartScreen(orderoption : widget.orderOption)),
                       );
                     },
                     style: OutlinedButton.styleFrom(

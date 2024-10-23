@@ -40,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
         stores = response.data; // 받아온 매장 데이터를 리스트에 저장
         isLoading = false;
       });
+      print(stores);
     } catch (e) {
       print(e);
       setState(() {
@@ -94,8 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     return _buildStoreTile(
                       stores[index]['name'],
                       stores[index]['location'],
-                      '거리 정보 없음', // 거리 정보가 없다면 임의의 값
-                      stores[index]['image'],
+                      // stores[index]['image'],
                       stores[index], // 매장 전체 정보
                     );
                   },
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void showStoreDetailsModal(BuildContext context, String title, String address, String imagePath, String operatingHours, String additionalInfo, dynamic store) {
+  void showStoreDetailsModal(BuildContext context, String title, String address,String operatingHours, String additionalInfo, dynamic store) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -137,7 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     SizedBox(height: 10),
-                    Image.network(imagePath, width: MediaQuery.of(context).size.width, height: 200, fit: BoxFit.cover),
                     SizedBox(height: 20),
                     Text(title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     Text(address, style: TextStyle(fontSize: 18, color: Colors.grey[800])),
@@ -218,14 +217,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  Widget _buildStoreTile(String? title, String? subtitle, String distance, String? imagePath, dynamic store) {
+  Widget _buildStoreTile(String? title, String? subtitle,  dynamic store) {
     return GestureDetector(
       onTap: () {
         showStoreDetailsModal(
             context,
             title ?? '매장 이름 없음', // null일 때 기본값 제공
             subtitle ?? '매장 주소 없음', // null일 때 기본값 제공
-            imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
+            // imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
             "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
             "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다.", // 추가 정보 임시 설정
             store // 매장 정보를 전달
@@ -241,9 +240,6 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8.0),
-                child: imagePath != null && imagePath.isNotEmpty
-                    ? Image.network(imagePath, width: 90, height: 90, fit: BoxFit.cover)
-                    : Image.network('https://example.com/default-image.jpg', width: 90, height: 90, fit: BoxFit.cover), // 기본 이미지 경로 제공
               ),
               Expanded(
                 child: Padding(
@@ -257,7 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       Spacer(),
                       Align(
                         alignment: Alignment.bottomRight,
-                        child: Text(distance, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
                       ),
                     ],
                   ),
@@ -443,7 +438,7 @@ class _HomeContentState extends State<HomeContent> {
                     child: Column(
                       children: [
                         ClipOval(
-                          child: Image.network(
+                          child: Image.network('http://34.64.110.210:8080/' +
                             products[index]['image'],
                             width: 70,
                             height: 70,
@@ -685,6 +680,7 @@ class _OrderContentState extends State<OrderContent> {
       Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
+        print(products);
       });
     } catch (e) {
       print('Error: $e');
@@ -702,6 +698,7 @@ class _OrderContentState extends State<OrderContent> {
           print("Product data: ${products[index]}");
           return ListTile(
             leading: Image.network(
+              'http://34.64.110.210:8080/' +
               products[index]['image'],
               fit: BoxFit.contain,
               errorBuilder: (context, error, stackTrace) {

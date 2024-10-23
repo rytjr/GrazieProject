@@ -42,7 +42,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               // 이미지 영역
               Image.network(
-                widget.product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
+                'http://34.64.110.210:8080/' +widget.product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
                 width: double.infinity,
                 height: 190,
                 fit: BoxFit.cover,

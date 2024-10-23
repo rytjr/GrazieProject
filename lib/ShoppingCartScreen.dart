@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ShoppingCartScreen extends StatefulWidget {
+
+
+  final String orderoption;
+
+
+  ShoppingCartScreen({
+    required this.orderoption,
+  });
   @override
   _CartScreenState createState() => _CartScreenState();
 }
@@ -20,13 +29,23 @@ class _CartScreenState extends State<ShoppingCartScreen> {
 
   // 서버로부터 데이터를 받아오는 함수
   Future<void> fetchCartItems() async {
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/cart/items?userId=2'));
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final response = await http.get(Uri.parse('http://34.64.110.210:8080/cart/items'),
+      headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token'
+      },
+    );
 
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print('쿠폰이당 $decodedResponseBody');
     if (response.statusCode == 200) {
       setState(() {
-        cartItems = json.decode(response.body);
+        cartItems = jsonDecode(decodedResponseBody);
         isSelectedList = List<bool>.filled(cartItems.length, false); // 체크박스 리스트 초기화
         isLoading = false;
+        print('카트 결과 $cartItems');
       });
     } else {
       setState(() {
@@ -89,7 +108,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '다산 그라찌에 (매장 이용)',
+              '다산 그라찌에 (${widget.orderoption})',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
@@ -143,6 +162,8 @@ class _CartScreenState extends State<ShoppingCartScreen> {
 
   // 각 메뉴 아이템을 표시하는 위젯
   Widget _buildCartItem(Map<String, dynamic> item, int index) {
+    print('Product name: ${item['name']}');
+    print('Product image: ${item['image']}');
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,15 +176,24 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           },
         ),
         SizedBox(width: 10),
-        Image.network(item['image'], width: 50, height: 50, fit: BoxFit.cover),
+        // null 체크: 이미지 URL이 없을 경우 기본 이미지 사용
+        Image.network(
+          item['image'] != null ? 'http://34.64.110.210:8080/' + item['image'] : 'https://via.placeholder.com/50',
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
+        ),
         SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item['name'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              // null 체크: 상품 이름이 null일 경우 기본 값 제공
+              Text(item['productName'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               Row(
                 children: [
+                  // null 체크: size와 cup 필드가 null일 경우 빈 문자열 처리
                   Text('${item['size'] ?? ''} / ${item['cup'] ?? ''}', style: TextStyle(fontSize: 14, color: Colors.grey)),
                   SizedBox(width: 10),
                 ],
@@ -177,7 +207,8 @@ class _CartScreenState extends State<ShoppingCartScreen> {
                     },
                     icon: Icon(Icons.remove_circle_outline, size: 20),
                   ),
-                  Text('${item['quantity']}', style: TextStyle(fontSize: 16)),
+                  // null 체크: 수량이 null일 경우 기본값 1 사용
+                  Text('${item['quantity'] ?? 1}', style: TextStyle(fontSize: 16)),
                   IconButton(
                     onPressed: () {
                       increaseQuantity(index); // 수량 증가
@@ -192,8 +223,10 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('${item['price']}원', style: TextStyle(fontSize: 14, color: Colors.grey)), // 개별 가격
-            Text('${(item['price'] * item['quantity'])}원', style: TextStyle(fontSize: 16, color: Colors.black)), // 오른쪽 하단에 총 가격 표시
+            // null 체크: 가격이 null일 경우 0으로 설정
+            Text('${item['price'] ?? 0}원', style: TextStyle(fontSize: 14, color: Colors.grey)), // 개별 가격
+            // null 체크: 가격과 수량이 null일 경우 0으로 설정
+            Text('${(item['price'] ?? 0) * (item['quantity'] ?? 1)}원', style: TextStyle(fontSize: 16, color: Colors.black)), // 총 가격 표시
           ],
         ),
       ],
@@ -238,5 +271,5 @@ class _CartScreenState extends State<ShoppingCartScreen> {
 }
 
 void main() => runApp(MaterialApp(
-  home: ShoppingCartScreen(),
+  home: ShoppingCartScreen(orderoption: '매장 이용',),
 ));

@@ -16,6 +16,8 @@ class PaymentScreen extends StatefulWidget {
   final String selectedCup;
   final String? specialRequest; // 요구사항 추가
   final String tk;
+  final int keypoint;
+  final int orderprice;
 
   PaymentScreen({
     required this.product,
@@ -25,6 +27,8 @@ class PaymentScreen extends StatefulWidget {
     required this.selectedCup,
     this.specialRequest, // optional 매개변수로 추가
     required this.tk,
+    required this.keypoint,
+    required this.orderprice,
   });
 
   @override
@@ -39,10 +43,31 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String? selectedCouponId; // 선택된 쿠폰 ID
   String orderId = '';
   String impuid = '';
+  int finlaprice = 0;
+  String name = '';
   @override
   void initState() {
     super.initState();
-    fetchOrderData();
+    if (widget.keypoint == 0) {
+      fetchOrderData();
+    } else {
+      // keypoint가 1이면 넘겨받은 데이터로 주문 내역 설정
+      setState(() {
+        print('가격 ${widget.product}');
+        orders = [
+          {
+            'name': widget.product['name'],
+            'price': widget.orderprice,
+            'quantity': widget.quantity,
+            'image': widget.product['image'],
+            'size': widget.selectedCup,
+            'cup': widget.selectedCup,
+          }
+        ];
+        isLoading = false;
+      });
+    }
+    fetchGetName();
   }
 
   Future<void> fetchOrderData() async {
@@ -62,6 +87,33 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (response.statusCode == 200) {
       setState(() {
         orders = jsonDecode(decodedResponseBody);
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      throw Exception('Failed to load orders');
+    }
+  }
+
+  Future<void> fetchGetName() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    print("제발2 $token");
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+
+    print('order' + response.body);
+    if (response.statusCode == 200) {
+      setState(() {
+        name = jsonDecode(decodedResponseBody);
         isLoading = false;
       });
     } else {
@@ -166,6 +218,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         // 서버에서 반환된 orderId 저장
         orderId = responseData['orderId'].toString();
+        finlaprice = responseData['finalPrice'];
 
         // 주문 성공 후 결제 진행
         // await startPaymentProcess();
@@ -397,11 +450,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
       height: 50,
       child: ElevatedButton(
         onPressed: () async {
+          submitOrder();
+          await Future.delayed(Duration(seconds: 1));
           // 결제 화면을 호출하고 결제 결과를 받음
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => impart(),
+              builder: (context) => impart(finalprice:  finlaprice, name: name),
             ),
           );
           // 결제 결과 처리
@@ -410,8 +465,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           impuid = result['imp_uid'];
           // checkPaymentProgress(impUid);
 
-          submitOrder();
-          await Future.delayed(Duration(seconds: 1));
+
           sendPaymentProgress();
 
         },
@@ -592,5 +646,7 @@ void main() => runApp(MaterialApp(
     quantity: 1,
     selectedCup: 'Solo',
     tk: '1',
+    keypoint: 0,
+    orderprice: 0,
   ),
 ));

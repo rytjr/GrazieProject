@@ -111,6 +111,7 @@ class PasswordFindScreen extends StatelessWidget {
     final response = await http.post(
       Uri.parse('http://34.64.110.210:8080/users/changeTempPassword?token=$token'),
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );

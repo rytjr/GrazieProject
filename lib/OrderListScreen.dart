@@ -13,6 +13,33 @@ class _OrderListScreenState extends State<OrderListScreen> {
   String selectedPeriod = "1개월";
   List<dynamic> orderList = []; // 주문 내역 리스트
   String searchQuery = ""; // 검색어
+  String name = '';
+
+
+  Future<void> fetchGetName() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    print("제발2 $token");
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+
+    print('order' + response.body);
+    if (response.statusCode == 200) {
+      setState(() {
+        name = jsonDecode(decodedResponseBody);
+      });
+    } else {
+      setState(() {
+      });
+      throw Exception('Failed to load orders');
+    }
+  }
 
   @override
   void initState() {
@@ -24,7 +51,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/api/pay/get/list/{name}'),
+      Uri.parse('http://34.64.110.210:8080/api/pay/get/list/$name'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token'
