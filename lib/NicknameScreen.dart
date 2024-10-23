@@ -28,12 +28,13 @@ class _NicknameScreenState extends State<NicknameScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8080/admin/read'), // 수정할 API 주소
+        Uri.parse('http://34.64.110.210:8080/admin/read'), // 수정할 API 주소
         headers: {
-          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+
         },
-        body: json.encode({'nickname': nickname}),
+        body: jsonEncode({'nickname': nickname}),
       );
 
       if (response.statusCode == 200) {

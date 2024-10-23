@@ -18,14 +18,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
     String? token = await storageService.getToken();
 
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/users/readProflie'),
+      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
-
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print('myjob $decodedResponseBody');
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+      final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
       return data['name']; // 서버에서 반환된 name 값
     } else {
       throw Exception('Failed to load user data');

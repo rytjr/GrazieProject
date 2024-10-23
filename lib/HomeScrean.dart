@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isLoading = true;
   String storeId = ''; // storeId 변수 추가
   String orderMode = ''; // orderMode 변수 추가
+  String tokentest = '';
 
   @override
   void initState() {
@@ -369,23 +370,28 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   void checkLoginStatus() async {
-    SecureStorageService storageService = SecureStorageService();
-    String? token = await storageService.getToken();
+    SecureStorageService secureStorageService = SecureStorageService();
+    String? token = await secureStorageService.getToken();
+    print('가져와져라 $token');
+
+
     print('toekb');
     print(token);
     if (token != null) {
       print(30030);
       try {
         final response = await http.get(Uri.parse(
-          'http://34.64.110.210:8080/profile'),
+          'http://34.64.110.210:8080/users/readProfile'),
           headers: {
-            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token'
           },
         );
-        print('Response status: ${response.statusCode}');
+        final decodedResponseBody = utf8.decode(response.bodyBytes);
+        print('Response status: ${response.body}');
         print(response.statusCode);
         if (response.statusCode == 200) {
-          final Map<String, dynamic> data = jsonDecode(response.body);
+          final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
           setState(() {
             isLoggedIn = true;
             userName = data['name']; // 서버에서 반환된 name 값을 가져옴
@@ -394,8 +400,6 @@ class _HomeContentState extends State<HomeContent> {
           setState(() {
             isLoggedIn = false;
           });
-          // 토큰이 유효하지 않으면 로그아웃 처리
-          storageService.deleteToken();
         }
       } catch (e) {
         print('Error: $e');
@@ -423,8 +427,8 @@ class _HomeContentState extends State<HomeContent> {
               fit: BoxFit.cover,
             ),
             isLoggedIn
-                ? _buildLoggedInUI() // 로그인 상태에 따른 UI
-                : _buildLoggedOutUI(),
+                ? _buildLoggedInUI()  // 로그인된 경우
+                : _buildLoggedOutUI(),  // 로그인되지 않은 경우
             SizedBox(height: 15), // 버튼과 리스트 사이의 간격
             SizedBox(
               height: 130, // 제품 리스트 높이 설정
@@ -658,11 +662,22 @@ class OrderContent extends StatefulWidget {
 class _OrderContentState extends State<OrderContent> {
   List<dynamic> products = [];
   final ApiService apiService = ApiService();
+  String tokentest = ''; // token 저장 변수 추가
 
   @override
   void initState() {
     super.initState();
     fetchProducts();
+    fetchToken();
+  }
+
+  // 토큰을 가져오는 함수
+  void fetchToken() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    setState(() {
+      tokentest = token ?? ''; // 토큰을 변수에 저장
+    });
   }
 
   void fetchProducts() async {
@@ -702,7 +717,8 @@ class _OrderContentState extends State<OrderContent> {
                   builder: (context) => ProductDetailScreen(
                     product: products[index],  // 제품 정보 전달
                     storeId: widget.storeId.toString(),  // storeId 전달
-                    orderOption: widget.orderMode,       // orderOption 전달 (매장 이용 또는 To-Go)
+                    orderOption: widget.orderMode, // orderOption 전달 (매장 이용 또는 To-Go)
+                    tk : tokentest,
                   ),
                 ),
               );
@@ -734,16 +750,19 @@ class _OtherContentState extends State<OtherContent> {
 
   Future<void> _fetchUserProfile() async {
     try {
-      String? token = await _storageService.getToken(); // 토큰 가져오기
+      SecureStorageService storageService = SecureStorageService();
+      String? token = await storageService.getToken();
+      print("제발2 $token");
       final response = await http.get(
-        Uri.parse('http://34.64.110.210:8080/profile'),
+        Uri.parse('http://34.64.110.210:8080/users/readProfile'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token'
         },
       );
-
+      final decodedResponseBody = utf8.decode(response.bodyBytes);
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+  final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
         setState(() {
           userName = data['name']; // 받아온 사용자 이름으로 변경
           isButtonEnabled = true;  // 성공적으로 로드되면 버튼 활성화

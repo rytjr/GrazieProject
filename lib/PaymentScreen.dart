@@ -52,13 +52,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final response = await http.get(
       Uri.parse('http://34.64.110.210:8080/cart/items'),
       headers: {
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk'
-      },
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+        },
     );
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+
     print('order' + response.body);
     if (response.statusCode == 200) {
       setState(() {
-        orders = json.decode(response.body);
+        orders = jsonDecode(decodedResponseBody);
         isLoading = false;
       });
     } else {
@@ -73,63 +76,29 @@ class _PaymentScreenState extends State<PaymentScreen> {
     return orders.fold(0, (sum, item) => sum + (item['price'] as int? ?? 0) * (item['quantity'] as int? ?? 0));
   }
 
-  // Future<void> checkPaymentProgress(String impUid) async {
-  //   final url = 'http://34.64.110.210:8080/api/pay/progress/$impUid';  // imp_uid를 URL에 추가
-  //
-  //   try {
-  //     final response = await http.post(Uri.parse(url));  // POST 요청 보내기
-  //
-  //     if (response.statusCode == 200) {
-  //       // 요청이 성공한 경우 처리
-  //       print('결제 진행 상태: ${response.body}');
-  //     } else {
-  //       // 요청이 실패한 경우 처리
-  //       print('결제 진행 상태 확인 실패: ${response.statusCode}, ${response.body}');
-  //     }
-  //   } catch (e) {
-  //     // 예외 처리
-  //     print('오류 발생: $e');
-  //   }
-  // }
-
-  // 결제 요청을 보내는 메서드
-  Future<void> _makePayment() async {
-    try {
-      // API로 GET 요청을 보냄
-      final response = await http.get(
-        Uri.parse('http://34.64.110.210:8080/api/pay/page'),  // 요청할 URL로 변경
-      );
-
-      if (response.statusCode == 200) {
-        final pageUrl = response.body; // 응답에서 반환된 URL을 받아옴
-        print('받아온 url : ${pageUrl}');
-        _showPaymentWebView(pageUrl); // WebView로 페이지 열기
-      } else {
-        // 결제 실패 처리
-        print('결제 실패: ${response.body}');
-        _showErrorDialog('결제에 실패했습니다. 다시 시도해 주세요.');
-      }
-    } catch (e) {
-      print('오류가 발생했습니다: $e');
-      _showErrorDialog('결제 요청 중 오류가 발생했습니다.');
-    }
-  }
 
   Future<void> sendPaymentProgress() async {
-    final url = 'http://34.64.110.210:8080/api/pay/progress';
-
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final url = Uri.parse('http://34.64.110.210:8080/api/pay/progress?imp_uid=$impuid&orderId=$orderId');
+    print('현재 결제 진행 중일걸?');
     try {
       final response = await http.post(
-        Uri.parse(url),
+        url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk',
+          'Authorization': 'Bearer $token'
         },
         body: jsonEncode({
-          'impUid': impuid,
+          'imp_uid': impuid,
           'orderId': orderId,
         }),
       );
+      print(jsonEncode({
+        'impUid': impuid,
+        'orderId': orderId,
+      }));
+      print('결제 다 했니? ${response.statusCode}');
       if (response.statusCode == 200) {
         print('결제 진행 상태 전송 성공: ${response.body}');
       } else {
@@ -140,24 +109,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-
-  // 결제 페이지를 WebView로 열기
-  void _showPaymentWebView(String pageUrl) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: Text('결제 페이지'),
-          ),
-          body: WebView(
-            initialUrl: pageUrl, // 반환된 페이지 URL을 WebView에 로드
-            javascriptMode: JavascriptMode.unrestricted, // 자바스크립트 허용
-          ),
-        ),
-      ),
-    );
-  }
 
   // 주문 데이터를 생성하는 메서드
   Map<String, dynamic> createOrderData() {
@@ -204,8 +155,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
         Uri.parse(url),
       headers: {
           'Content-Type': 'application/json',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk'
-      },
+      'Authorization': 'Bearer $token'
+        },
       body: body, // 데이터를 JSON으로 변환하여 전송
       );
       print('ordermake $body');
@@ -214,7 +165,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         print('주문 성공: ${response.body}');
 
         // 서버에서 반환된 orderId 저장
-        orderId = responseData['orderId'];
+        orderId = responseData['orderId'].toString();
 
         // 주문 성공 후 결제 진행
         // await startPaymentProcess();
@@ -440,7 +391,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildPaymentButton() {
-    submitOrder();
+    // submitOrder();
     return SizedBox(
       width: double.infinity,
       height: 50,
@@ -455,12 +406,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
           );
           // 결제 결과 처리
           print('result22 $result');
-          if (result != null) {
-            impuid = result['imp_uid'];
-            // checkPaymentProgress(impUid);
-            submitOrder();
-            sendPaymentProgress();
-          }
+
+          impuid = result['imp_uid'];
+          // checkPaymentProgress(impUid);
+
+          submitOrder();
+          await Future.delayed(Duration(seconds: 1));
+          sendPaymentProgress();
+
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
@@ -508,15 +461,18 @@ class _CouponModalState extends State<CouponModal> {
           Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk',
+            'Authorization': 'Bearer $token'
           },
         );
-        print('order' + response.body);
+        final decodedResponseBody = utf8.decode(response.bodyBytes);
+
+        print('order' + decodedResponseBody);
         print(response.body);
         if (response.statusCode == 200) {
           setState(() {
             // UTF-8로 response.body를 디코딩 후 JSON 파싱
-            orders = json.decode(utf8.decode(response.bodyBytes));
+            coupons  = jsonDecode(decodedResponseBody);
+            print('ffff $coupons ');
             isLoading = false;
           });
         } else {

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 
 class OrderListScreen extends StatefulWidget {
@@ -16,10 +19,28 @@ class _OrderListScreenState extends State<OrderListScreen> {
     super.initState();
     fetchOrderList(); // 주문 내역 불러오기
   }
-
-  void fetchOrderList() {
+  void fetchOrderList() async{
     // 주문 내역을 불러오는 로직 (API 호출)
-    // orderList = fetchFromAPI();
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/api/pay/get/list/{name}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print('주문내역 $decodedResponseBody');
+    if (response.statusCode == 200) {
+      setState(() {
+        orderList = jsonDecode(decodedResponseBody);
+      });
+    } else {
+      setState(() {
+      });
+      throw Exception('Failed to load orders');
+    }
   }
 
   void filterByDate(String period) {

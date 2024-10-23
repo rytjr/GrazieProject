@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -19,12 +20,20 @@ class _CouponScreenState extends State<CouponScreen> {
 
   // 서버에서 쿠폰 데이터를 받아오는 함수
   void fetchCoupons() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
     // 서버의 URL을 정확하게 입력합니다.
-    final response = await http.get(Uri.parse('http://10.0.2.2:8000/discount-coupons/read/13'));
-
+    final response = await http.get(Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print('쿠폰 $decodedResponseBody');
     if (response.statusCode == 200) {
       setState(() {
-        coupons = json.decode(response.body);
+        coupons = jsonDecode(decodedResponseBody);
         isLoading = false;
       });
     } else {
@@ -93,7 +102,7 @@ class CouponCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${coupon['discountRate']}% 할인', // 서버의 discountRate 사용
+              '${coupon['couponName']} 쿠폰', // 서버의 discountRate 사용
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),

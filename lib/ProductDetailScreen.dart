@@ -5,11 +5,13 @@ class ProductDetailScreen extends StatefulWidget {
   final dynamic product;
   final String storeId;  // 매장 ID 추가
   final String orderOption;  // 매장이용 or To-Go 추가
+  final String tk;
 
   ProductDetailScreen({
     required this.product,
     required this.storeId,  // 매장 ID 받기
     required this.orderOption,  // 매장이용 or To-Go 받기
+    required this.tk,
   });
 
   @override
@@ -18,6 +20,13 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? selectedTemperature;  // 사용자가 선택한 온도를 저장할 변수
+
+  @override
+  void initState() {
+    super.initState();
+    // 화면이 시작될 때 토큰 출력
+    print('Token: ${widget.tk}');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +122,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         onPressed: selectedTemperature == null
                             ? null // 온도를 선택하지 않으면 버튼 비활성화
                             : () {
+                          print('ttj');
+                          print(widget.tk);
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -121,6 +132,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 storeId: widget.storeId,  // 매장 ID 전달
                                 orderOption: widget.orderOption,  // 매장이용 or To-Go 전달
                                 selectedTemperature: selectedTemperature!,  // 선택된 온도 전달
+                                tk : widget.tk,
                               ),
                             ),
                           );

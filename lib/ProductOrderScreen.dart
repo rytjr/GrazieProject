@@ -77,8 +77,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJleHBpcmVzQXQiOiIyMDI0LTEwLTI3VDExOjI1OjQ4LjExMloiLCJzdWIiOiI4IiwiaWF0IjoxNzI5NDIzNTQ4LCJleHAiOjE3MzAwMjgzNDh9.toz_2QH_7tcrtdAf9wcHIjcVC6VMQ6qHqlYiIcG04Kk'
-        },
+          'Authorization': 'Bearer $token'
+      },
         body: jsonEncode(body),
       );
       print('haha ${response.statusCode}');
