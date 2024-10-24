@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/SecureStorageService.dart';
+import 'package:fluttertest/PaymentScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -31,6 +32,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
   Future<void> fetchCartItems() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
+    print('카트코튼 $token');
     final response = await http.get(Uri.parse('http://34.64.110.210:8080/cart/items'),
       headers: {
       'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         ),
         TextButton(
           onPressed: deleteSelectedItems,
-          child: Text('선택 삭제', style: TextStyle(color: Colors.red)),
+          child: Text('선택 삭제', style: TextStyle(color: Colors.black)),
         ),
       ],
     );
@@ -198,7 +200,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
                   SizedBox(width: 10),
                 ],
               ),
-              Text('옵션변경', style: TextStyle(fontSize: 14, color: Colors.red)),
+              Text('옵션변경', style: TextStyle(fontSize: 14, color: Colors.black)),
               Row(
                 children: [
                   IconButton(
@@ -252,11 +254,27 @@ class _CartScreenState extends State<ShoppingCartScreen> {
       child: ElevatedButton(
         onPressed: () {
           // 주문하기 동작 추가
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentScreen(
+                product: cartItems,
+                storeId: '',
+                orderOption: '매장 이용',
+                quantity: 1,
+                selectedCup: 'small',
+                specialRequest: '',  // 요구사항 전달
+                tk : '',
+                keypoint : 0,
+                orderprice : 0,
+              ),
+            ),
+          );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF880E4F), // 와인색 버튼
+          backgroundColor: Color(0xFF863C07),
         ),
-        child: Text('${calculateTotalSelectedPrice()}원 주문하기', style: TextStyle(fontSize: 18)),
+        child: Text('${calculateTotalSelectedPrice()}원 주문하기', style: TextStyle(fontSize: 18,color: Colors.white)),
       ),
     );
   }

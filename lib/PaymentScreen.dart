@@ -317,7 +317,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Row(
               children: [
                 Image.network(
-                  firstItem['image'] ?? '',
+                  firstItem['image'] != null ?'http://34.64.110.210:8080/' + firstItem['image'] : 'https://via.placeholder.com/50',
                   width: 50,
                   height: 50,
                   errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
@@ -326,7 +326,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(firstItem['name'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(firstItem['productName'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     Text('${firstItem['price'] ?? 0}원', style: TextStyle(fontSize: 14, color: Colors.grey)),
                     Text('${firstItem['size'] ?? ''} / ${firstItem['cup'] ?? ''}', style: TextStyle(fontSize: 14, color: Colors.grey)),
                   ],
@@ -397,6 +397,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         if (selectedCoupon != null) {
           setState(() {
             selectedCouponId = selectedCoupon; // 선택된 쿠폰 ID 저장
+            print("선택된 쿠폰 $selectedCouponId");
           });
         }
       },
@@ -472,15 +473,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.brown,
         ),
-        child: Text('${calculateTotalPrice()}원 결제하기', style: TextStyle(fontSize: 18)),
+        child: Text('${calculateTotalPrice()}원 결제하기', style: TextStyle(fontSize: 18,color: Colors.white)),
       ),
     );
   }
 }
-
-
-
-// 쿠폰 모달 화면
 class CouponModal extends StatefulWidget {
   @override
   _CouponModalState createState() => _CouponModalState();
@@ -488,19 +485,16 @@ class CouponModal extends StatefulWidget {
 
 class _CouponModalState extends State<CouponModal> {
   List<dynamic> coupons = [];
-  List<dynamic> orders = []; // orders 변수 선언
   bool isLoading = true;
   String? selectedCouponId; // 선택된 쿠폰 ID를 저장하는 변수
-  int a = 0;
 
   @override
   void initState() {
     super.initState();
-    fetchOrderData(); // 바로 비동기 호출을 할 수 있도록 변경
+    fetchCouponsData(); // 비동기로 쿠폰 데이터를 가져오는 함수 호출
   }
 
-  Future<void> fetchOrderData() async {
-
+  Future<void> fetchCouponsData() async {
     setState(() {
       isLoading = true;
     });
@@ -509,43 +503,33 @@ class _CouponModalState extends State<CouponModal> {
     String? token = await storageService.getToken();
     print(token);
 
-    if (a == 0) {
-      try {
-        final response = await http.get(
-          Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token'
-          },
-        );
-        final decodedResponseBody = utf8.decode(response.bodyBytes);
+    try {
+      final response = await http.get(
+        Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      final decodedResponseBody = utf8.decode(response.bodyBytes);
 
-        print('order' + decodedResponseBody);
-        print(response.body);
-        if (response.statusCode == 200) {
-          setState(() {
-            // UTF-8로 response.body를 디코딩 후 JSON 파싱
-            coupons  = jsonDecode(decodedResponseBody);
-            print('ffff $coupons ');
-            isLoading = false;
-          });
-        } else {
-          throw Exception('Failed to load orders');
-        }
-      } catch (e) {
-        print('Error: $e');
+      print('응답 받은 쿠폰 리스트: $decodedResponseBody');
+      if (response.statusCode == 200) {
         setState(() {
+          coupons = jsonDecode(decodedResponseBody);
           isLoading = false;
         });
+      } else {
+        throw Exception('Failed to load coupons');
       }
-    } else {
-      // 토큰이 없을 경우 처리 (로그아웃 상태)
-      print("No token found");
+    } catch (e) {
+      print('Error: $e');
       setState(() {
         isLoading = false;
       });
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -554,7 +538,8 @@ class _CouponModalState extends State<CouponModal> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context, selectedCouponId); // 선택된 쿠폰 ID 반환
+              // 선택된 쿠폰 ID를 반환하고 모달 닫기
+              Navigator.pop(context, selectedCouponId);
             },
             child: Text('선택 완료', style: TextStyle(color: Colors.white)),
           ),
@@ -562,19 +547,50 @@ class _CouponModalState extends State<CouponModal> {
       ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-        itemCount: coupons.length,
-        itemBuilder: (context, index) {
-          return CouponCard(
-            coupon: coupons[index],
-            isSelected: selectedCouponId == coupons[index]['id'],
-            onSelected: (String couponId) {
-              setState(() {
-                selectedCouponId = couponId; // 선택된 쿠폰 ID 업데이트
-              });
-            },
-          );
-        },
+          : Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: coupons.length,
+              itemBuilder: (context, index) {
+                return CouponCard(
+                  coupon: coupons[index],
+                  // 쿠폰 ID가 null이 아닌 경우에만 비교. 형 변환을 통해 일관성 유지.
+                  isSelected: selectedCouponId == coupons[index]['id'].toString(),
+                  onSelected: (String couponId) {
+                    setState(() {
+                      selectedCouponId = couponId; // 선택된 쿠폰 ID 업데이트
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ElevatedButton(
+              onPressed: () {
+                // 선택된 쿠폰이 없는 경우 처리
+                if (selectedCouponId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('쿠폰을 선택해주세요.'),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } else {
+                  // 선택된 쿠폰 ID를 반환하고 모달 닫기
+                  Navigator.pop(context, selectedCouponId);
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF863C07), // 버튼 색상 설정
+                minimumSize: Size(double.infinity, 50), // 버튼 크기 설정
+              ),
+              child: Text('사용하기', style: TextStyle(fontSize: 18)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -595,7 +611,8 @@ class CouponCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        onSelected(coupon['id']); // 쿠폰이 선택되면 ID 반환
+        // 쿠폰 선택 시 ID를 문자열로 변환하여 전달
+        onSelected(coupon['id'].toString()); // 쿠폰이 선택되면 ID 반환
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
@@ -603,13 +620,14 @@ class CouponCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           side: BorderSide(color: isSelected ? Colors.blue : Colors.grey.shade300), // 선택된 쿠폰 강조
         ),
+        color: isSelected ? Colors.blue.shade50 : Colors.white, // 선택되면 배경색 변경
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${coupon['name']} 쿠폰',
+                '${coupon['couponName']} 쿠폰',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
@@ -636,6 +654,8 @@ class CouponCard extends StatelessWidget {
     );
   }
 }
+
+
 
 void main() => runApp(MaterialApp(
   debugShowCheckedModeBanner: false,

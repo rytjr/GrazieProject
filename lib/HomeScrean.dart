@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:fluttertest/LoginScreen.dart';
 import 'package:fluttertest/OrderListScreen.dart';
 import 'package:fluttertest/ProductDetailScreen.dart';
+import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'package:fluttertest/TermsOfUseScreen.dart';
 import 'package:fluttertest/ApiService.dart';
 import 'package:fluttertest/MyPageScreen.dart';
@@ -289,16 +290,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         centerTitle: true,
-        leading: SizedBox(), // 왼쪽에 빈 공간 추가
-        actions: [
-          IconButton(
-            icon: Icon(Icons.notifications),
-            color: Color(0xFF5B1333),
-            onPressed: () {
-              // 알림 아이콘 클릭 시의 동작을 여기에 추가하세요.
-            },
-          ),
-        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: [
@@ -608,34 +599,6 @@ class _HomeContentState extends State<HomeContent> {
             ),
           ),
           SizedBox(height: 15), // 내 정보 확인하기 버튼 아래에 간격 추가
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () {
-                // "내정보 확인" 버튼이 눌렸을 때의 동작
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MyPageScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: Text(
-                "내 정보 확인하기",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -759,7 +722,7 @@ class _OtherContentState extends State<OtherContent> {
       );
       final decodedResponseBody = utf8.decode(response.bodyBytes);
       if (response.statusCode == 200) {
-  final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
+        final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
         setState(() {
           userName = data['name']; // 받아온 사용자 이름으로 변경
           isButtonEnabled = true;  // 성공적으로 로드되면 버튼 활성화
@@ -784,15 +747,6 @@ class _OtherContentState extends State<OtherContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          "Other",
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-      ),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
@@ -807,12 +761,13 @@ class _OtherContentState extends State<OtherContent> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
+                  color: Colors.black,
                 ),
                 textAlign: TextAlign.center,
               ),
             ),
             SizedBox(height: 20),
+            // 4개의 버튼을 균등하게 배치할 수 있도록 Row 수정
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -822,6 +777,8 @@ class _OtherContentState extends State<OtherContent> {
                     context, Icons.receipt_long, "주문내역", OrderListScreen()),
                 _buildOptionButton(
                     context, Icons.card_giftcard, "쿠폰", CouponScreen()),
+                _buildOptionButton(
+                    context, Icons.shopping_cart, "장바구니", ShoppingCartScreen(orderoption : '매장 이용')), // 장바구니 버튼 추가
               ],
             ),
             SizedBox(height: 20),
@@ -919,6 +876,7 @@ class _OtherContentState extends State<OtherContent> {
     }
   }
 }
+
   void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,

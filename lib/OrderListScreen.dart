@@ -20,56 +20,67 @@ class _OrderListScreenState extends State<OrderListScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     print("제발2 $token");
+
     final response = await http.get(
       Uri.parse('http://34.64.110.210:8080/users/readProfile'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
+        'Authorization': 'Bearer $token',
       },
     );
-    final decodedResponseBody = utf8.decode(response.bodyBytes);
 
-    print('order' + response.body);
     if (response.statusCode == 200) {
+      final decodedResponseBody = utf8.decode(response.bodyBytes);
+      print('order' + decodedResponseBody);
+
       setState(() {
-        name = jsonDecode(decodedResponseBody);
+        final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
+        name = data['name']; // 사용자 이름 설정
       });
+
+      print("이름 ㅎㅎ : $name");
     } else {
-      setState(() {
-      });
-      throw Exception('Failed to load orders');
+      throw Exception('Failed to load profile');
     }
   }
 
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    await fetchGetName(); // 사용자 이름 불러오기
+    await Future.delayed(Duration(seconds: 1)); // 1초 대기
     fetchOrderList(); // 주문 내역 불러오기
   }
-  void fetchOrderList() async{
+
+  void fetchOrderList() async {
     // 주문 내역을 불러오는 로직 (API 호출)
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
+
+    // API 경로를 확인하세요. `$name`이 올바르게 설정되었는지 확인
     final response = await http.get(
       Uri.parse('http://34.64.110.210:8080/api/pay/get/list/$name'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
+        'Authorization': 'Bearer $token',
       },
     );
-    final decodedResponseBody = utf8.decode(response.bodyBytes);
-    print('주문내역 $decodedResponseBody');
+
     if (response.statusCode == 200) {
+      final decodedResponseBody = utf8.decode(response.bodyBytes);
+      print('주문내역 : $decodedResponseBody');
+
       setState(() {
         orderList = jsonDecode(decodedResponseBody);
       });
     } else {
-      setState(() {
-      });
       throw Exception('Failed to load orders');
     }
   }
-
   void filterByDate(String period) {
     setState(() {
       selectedPeriod = period;

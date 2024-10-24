@@ -11,6 +11,7 @@ class CouponScreen extends StatefulWidget {
 class _CouponScreenState extends State<CouponScreen> {
   List<dynamic> coupons = [];
   bool isLoading = true;
+  String? selectedCouponId; // 선택된 쿠폰 ID 저장
 
   @override
   void initState() {
@@ -44,6 +45,36 @@ class _CouponScreenState extends State<CouponScreen> {
     }
   }
 
+  // 쿠폰 발급 모달창 띄우기
+  void _showCouponModal(String couponName, String couponId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('쿠폰 발급'),
+          content: Text('$couponName 쿠폰을 발급하시겠습니까?'),
+          actions: [
+            TextButton(
+              child: Text('취소'),
+              onPressed: () {
+                Navigator.of(context).pop(); // 모달창 닫기
+              },
+            ),
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                setState(() {
+                  selectedCouponId = couponId; // 선택된 쿠폰 ID 저장
+                });
+                Navigator.of(context).pop(); // 모달창 닫기
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +106,13 @@ class _CouponScreenState extends State<CouponScreen> {
           : ListView.builder(
         itemCount: coupons.length,
         itemBuilder: (context, index) {
-          return CouponCard(coupon: coupons[index]);
+          return CouponCard(
+            coupon: coupons[index],
+            isSelected: selectedCouponId == coupons[index]['id'].toString(),
+            onSelected: (String couponId, String couponName) {
+              _showCouponModal(couponName, couponId); // 쿠폰 클릭 시 모달창 띄우기
+            },
+          );
         },
       ),
     );
@@ -85,46 +122,51 @@ class _CouponScreenState extends State<CouponScreen> {
 // 쿠폰 카드 UI
 class CouponCard extends StatelessWidget {
   final dynamic coupon;
+  final bool isSelected;
+  final Function(String, String) onSelected; // 쿠폰 ID와 이름 전달
 
-  const CouponCard({required this.coupon});
+  const CouponCard({
+    required this.coupon,
+    required this.isSelected,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-        side: BorderSide(color: Colors.grey.shade300),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${coupon['couponName']} 쿠폰', // 서버의 discountRate 사용
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '${coupon['description']}',
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-            SizedBox(height: 8),
-            Text(
-              '기간 ${coupon['expirationDate']}', // 서버의 expirationDate 사용
-              style: TextStyle(fontSize: 14, color: Colors.red),
-            ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: IconButton(
-                icon: Icon(Icons.cloud_download, color: Colors.blue),
-                onPressed: () {
-                  // 다운로드 아이콘 클릭 시 동작 추가 가능
-                },
+    return GestureDetector(
+      onTap: () {
+        // 쿠폰 선택 시 ID와 이름을 전달하여 모달창에서 확인
+        onSelected(coupon['id'].toString(), coupon['couponName']);
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: BorderSide(color: isSelected ? Colors.blue : Colors.grey.shade300), // 선택된 쿠폰 강조
+        ),
+        color: isSelected ? Colors.blue.shade50 : Colors.white, // 선택되면 배경색 변경
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${coupon['couponName']} 쿠폰', // 서버의 couponName 사용
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              SizedBox(height: 8),
+              Text(
+                '${coupon['description']}',
+                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              ),
+              SizedBox(height: 8),
+              Text(
+                '기간 ${coupon['expirationDate']}', // 서버의 expirationDate 사용
+                style: TextStyle(fontSize: 14, color: Colors.black),
+              ),
+              SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );

@@ -29,21 +29,22 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
   Future<void> _changePassword() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
+    print('토큰토큼 ${token}');
     final String currentPassword = _currentPasswordController.text;
     final String newPassword = _newPasswordController.text;
-
-    final response = await http.post(
+    final response = await http.put(
       Uri.parse('http://34.64.110.210:8080/users/changePassword'),
       headers: {
+        'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
-        'currentPassword': currentPassword,
+        "currentPassword": currentPassword,
         'newPassword': newPassword,
       }),
     );
-
-    if (response.statusCode == 201) {
+    print('비밀번호 ${response.body}');
+    if (response.statusCode == 200) {
       // 비밀번호 변경 성공 모달 띄우기
       _showResultModal('비밀번호가 변경되었습니다.', true);
     } else {
@@ -118,7 +119,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
             if (_errorMessage.isNotEmpty)
               Text(
                 _errorMessage,
-                style: TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.white),
               ),
             SizedBox(height: 40),
             SizedBox(
@@ -132,9 +133,9 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF863C07),
                 ),
-                child: Text('확인'),
+                child: Text('확인',style:TextStyle(fontSize: 18,color: Colors.white)),
               ),
             ),
           ],

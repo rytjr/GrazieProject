@@ -108,13 +108,13 @@ class _NicknameScreenState extends State<NicknameScreen> {
                 }
                     : null, // 입력이 완료되지 않으면 버튼 비활성화
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple, // 버튼 색상
+                  backgroundColor: Colors.brown, // 버튼 색상
                   padding: EdgeInsets.symmetric(vertical: 16),
                   disabledBackgroundColor: Colors.grey[300], // 비활성화 시 색상
                 ),
                 child: Text(
                   '확인',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16,color: Colors.white),
                 ),
               ),
             ),

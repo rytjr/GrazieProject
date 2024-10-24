@@ -121,11 +121,11 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
             Text('이름'),
             Text(userProfile['name'] ?? ''),
             Divider(),
-            Text('아이디'),
-            Text(userProfile['id'] ?? ''),
+            Text('전화번호'),
+            Text(userProfile['phone'] ?? ''),
             Divider(),
-            Text('생년월일'),
-            Text(userProfile['birthday'] ?? ''),
+            Text('닉네임'),
+            Text(userProfile['nickname'] ?? ''),
             Divider(),
             Text('휴대폰'),
             Text(userProfile['phone'] ?? ''),
@@ -138,10 +138,10 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
               controller: TextEditingController(text: userProfile['email']),
             ),
             TextField(
-              onChanged: (value) => userProfile['nickname'] = value,
+              onChanged: (value) => userProfile['gender'] = value,
               decoration: InputDecoration(labelText: '성별'),
               controller:
-              TextEditingController(text: userProfile['nickname']),
+              TextEditingController(text: userProfile['gender']),
             ),
             SizedBox(height: 20),
             Divider(),
@@ -155,9 +155,8 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
                   },
                   style: OutlinedButton.styleFrom(
                     backgroundColor: Colors.brown,
-                    side: BorderSide(color: Colors.red),
                   ),
-                  child: Text('회원탈퇴'),
+                  child: Text('회원탈퇴', style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -169,7 +168,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
                     padding: EdgeInsets.symmetric(
                         vertical: 15, horizontal: 30),
                   ),
-                  child: Text('수정완료'),
+                  child: Text('수정완료', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),

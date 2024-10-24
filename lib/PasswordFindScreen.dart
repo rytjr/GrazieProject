@@ -5,7 +5,14 @@ import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/UserInScreen.dart';
 import 'package:http/http.dart' as http;
 
-class PasswordFindScreen extends StatelessWidget {
+class PasswordFindScreen extends StatefulWidget {
+  @override
+  _PasswordFindScreenState createState() => _PasswordFindScreenState();
+}
+
+class _PasswordFindScreenState extends State<PasswordFindScreen> {
+  final TextEditingController _emailController = TextEditingController(); // 이메일 입력값을 제어하는 컨트롤러
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,11 +28,7 @@ class PasswordFindScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
-            _buildInputField('아이디'),
-            SizedBox(height: 20),
-            _buildInputField('이름'),
-            SizedBox(height: 20),
-            _buildInputField('이메일'),
+            _buildInputField('이메일', _emailController),
             SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
@@ -35,7 +38,7 @@ class PasswordFindScreen extends StatelessWidget {
                   await _sendNewPassword(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF00C853), // 버튼 색상 (녹색)
+                  backgroundColor: Color(0xFF863C07),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -88,8 +91,9 @@ class PasswordFindScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInputField(String labelText) {
+  Widget _buildInputField(String labelText, TextEditingController controller) {
     return TextField(
+      controller: controller, // 컨트롤러 연결
       decoration: InputDecoration(
         labelText: labelText,
         labelStyle: TextStyle(color: Colors.grey),
@@ -105,18 +109,24 @@ class PasswordFindScreen extends StatelessWidget {
 
   // 비밀번호 변경 요청
   Future<void> _sendNewPassword(BuildContext context) async {
-    SecureStorageService storageService = SecureStorageService();
-    String? token = await storageService.getToken();
+    String email = _emailController.text; // 이메일 값 가져오기
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('이메일을 입력해주세요.')),
+      );
+      return;
+    }
 
     final response = await http.post(
-      Uri.parse('http://34.64.110.210:8080/users/changeTempPassword?token=$token'),
+      Uri.parse('http://34.64.110.210:8080/request-temp-password'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
       },
+      body: json.encode({"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
     );
-
-    if (response.statusCode == 201) {
+    print("비밀번호 찾기 ${response.body},$email");
+    if (response.statusCode == 200) {
       // 서버로부터 반환된 JSON 데이터에서 비밀번호를 추출
       final Map<String, dynamic> responseData = json.decode(response.body);
       final newPassword = responseData['newPassword']; // 서버에서 반환된 비밀번호
@@ -126,7 +136,6 @@ class PasswordFindScreen extends StatelessWidget {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('새 비밀번호'),
             content: Text('새 비밀번호: $newPassword'),
             actions: [
               TextButton(

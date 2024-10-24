@@ -33,11 +33,11 @@ class _IdFindScreenState extends State<IdFindScreen> {
       final response = await http.post(
         Uri.parse('http://34.64.110.210:8080/email/find-id'),
         headers: {
-          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
         },
         body: json.encode({'email': email}),
       );
-
+      print('아이디 ${response.body}');
       if (response.statusCode == 200) {
         // 성공적으로 요청이 완료되었을 때 모달창 띄우기
         showDialog(
@@ -102,82 +102,6 @@ class _IdFindScreenState extends State<IdFindScreen> {
               ),
             ),
             SizedBox(height: 20),
-            // 법적 생년월일 입력 필드
-            TextField(
-              decoration: InputDecoration(
-                labelText: '법적생년월일 8자리',
-                labelStyle: TextStyle(color: Colors.grey),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Colors.black),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            // 전화번호 입력 필드
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 패딩을 통해 높이 맞춤
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                    ),
-                    value: '010',
-                    items: ['010', '011', '016', '019']
-                        .map((String value) => DropdownMenuItem(
-                      value: value,
-                      child: Text(value),
-                    ))
-                        .toList(),
-                    onChanged: (String? newValue) {},
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  flex: 4,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: '번호입력',
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 동일한 패딩 적용
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  flex: 4,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      labelText: '번호입력',
-                      contentPadding: EdgeInsets.symmetric(vertical: 16.0), // 동일한 패딩 적용
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                      ),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: Colors.black),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 30),
             // 아이디 찾기 버튼
             SizedBox(
               width: double.infinity,
