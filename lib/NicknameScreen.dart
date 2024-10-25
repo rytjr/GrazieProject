@@ -25,10 +25,10 @@ class _NicknameScreenState extends State<NicknameScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final String nickname = _nicknameController.text;
-
+    print('닉네임 토큰 $token');
     try {
-      final response = await http.post(
-        Uri.parse('http://34.64.110.210:8080/admin/read'), // 수정할 API 주소
+      final response = await http.patch(
+        Uri.parse('http://34.64.110.210:8080/users/additional-info/updateNickname'), // 수정할 API 주소
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -36,7 +36,8 @@ class _NicknameScreenState extends State<NicknameScreen> {
         },
         body: jsonEncode({'nickname': nickname}),
       );
-
+      print("닉네님 : ${nickname}");
+      print("닉네님 : ${response.body}");
       if (response.statusCode == 200) {
         // 닉네임 수정 성공 시 이전 화면으로 이동
         Navigator.pop(context);
@@ -57,7 +58,9 @@ class _NicknameScreenState extends State<NicknameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('닉네임 설정'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -108,7 +111,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
                 }
                     : null, // 입력이 완료되지 않으면 버튼 비활성화
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.brown, // 버튼 색상
+                  backgroundColor: Color(0xFF5B1333), // 버튼 색상
                   padding: EdgeInsets.symmetric(vertical: 16),
                   disabledBackgroundColor: Colors.grey[300], // 비활성화 시 색상
                 ),

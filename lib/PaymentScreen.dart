@@ -48,6 +48,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   void initState() {
     super.initState();
+    print("키포인트 ${widget.keypoint}");
     if (widget.keypoint == 0) {
       fetchOrderData();
     } else {
@@ -83,12 +84,13 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
     final decodedResponseBody = utf8.decode(response.bodyBytes);
 
-    print('order' + response.body);
+    print('order' + decodedResponseBody);
     if (response.statusCode == 200) {
       setState(() {
         orders = jsonDecode(decodedResponseBody);
         isLoading = false;
       });
+      print("카트결과 : $orders");
     } else {
       setState(() {
         isLoading = false;
@@ -110,12 +112,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
     final decodedResponseBody = utf8.decode(response.bodyBytes);
 
-    print('order' + response.body);
+    print('ordname : ' + decodedResponseBody);
     if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
       setState(() {
-        name = jsonDecode(decodedResponseBody);
+        name = data['name'];
         isLoading = false;
       });
+      print(name);
     } else {
       setState(() {
         isLoading = false;
@@ -125,7 +129,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   int calculateTotalPrice() {
-    return orders.fold(0, (sum, item) => sum + (item['price'] as int? ?? 0) * (item['quantity'] as int? ?? 0));
+    return orders.fold(0, (sum, item) => sum + (item['price'] as int? ?? 0));
   }
 
 
@@ -257,7 +261,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('결제하기'),
       ),
       body: isLoading
@@ -285,15 +291,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   separatorBuilder: (context, index) => Divider(thickness: 1, color: Colors.grey[300]),
                 ),
               ),
-            Divider(thickness: 1, color: Colors.grey[300]),
             _buildCouponSection(),
             Divider(thickness: 1, color: Colors.grey[300]),
-            _buildPaymentMethods(),
-            Divider(thickness: 1, color: Colors.grey[300]),
+            // _buildPaymentMethods(),
+            // Divider(thickness: 1, color: Colors.grey[300]),
             _buildReceiptSection(),
             SizedBox(height: 20),
+            SizedBox(height: 170),
             _buildTotalPriceRow(),
             SizedBox(height: 10),
+
             _buildPaymentButton(),
           ],
         ),
@@ -317,7 +324,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             Row(
               children: [
                 Image.network(
-                  firstItem['image'] != null ?'http://34.64.110.210:8080/' + firstItem['image'] : 'https://via.placeholder.com/50',
+                  firstItem['image'] != null ?'http://34.64.110.210:8080/' + firstItem['image']:'',
                   width: 50,
                   height: 50,
                   errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
@@ -335,7 +342,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
           Text(
             _isExpanded ? '줄이기' : '더보기',
-            style: TextStyle(fontSize: 16, color: Colors.blue),
+            style: TextStyle(fontSize: 16, color: Color(0xFF5B1333)),
           ),
         ],
       ),
@@ -347,7 +354,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Image.network(
-          item['image'] ?? '',
+          'http://34.64.110.210:8080/' + item['image'] ?? '',
           width: 50,
           height: 50,
           errorBuilder: (context, error, stackTrace) => Icon(Icons.error),
@@ -357,7 +364,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item['name'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(item['productName'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               Text('${item['size'] ?? ''} / ${item['cup'] ?? ''}', style: TextStyle(fontSize: 14, color: Colors.grey)),
               Text('수량: ${item['quantity'] ?? 0}', style: TextStyle(fontSize: 14)),
             ],
@@ -404,18 +411,18 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentMethods() {
-    return ListTile(
-      title: Text(
-        '결제 수단',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-      ),
-      trailing: Icon(Icons.arrow_forward_ios),
-      onTap: () {
-        // 결제 수단 화면으로 이동
-      },
-    );
-  }
+  // Widget _buildPaymentMethods() {
+  //   return ListTile(
+  //     title: Text(
+  //       '결제 수단',
+  //       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  //     ),
+  //     trailing: Icon(Icons.arrow_forward_ios),
+  //     onTap: () {
+  //       // 결제 수단 화면으로 이동
+  //     },
+  //   );
+  // }
 
   Widget _buildReceiptSection() {
     return ListTile(
@@ -471,7 +478,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.brown,
+          backgroundColor: Color(0xFF5B1333),
         ),
         child: Text('${calculateTotalPrice()}원 결제하기', style: TextStyle(fontSize: 18,color: Colors.white)),
       ),
@@ -584,10 +591,10 @@ class _CouponModalState extends State<CouponModal> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF863C07), // 버튼 색상 설정
+                backgroundColor: Color(0xFF5B1333), // 버튼 색상 설정
                 minimumSize: Size(double.infinity, 50), // 버튼 크기 설정
               ),
-              child: Text('사용하기', style: TextStyle(fontSize: 18)),
+              child: Text('사용하기', style: TextStyle(fontSize: 18,color: Colors.white)),
             ),
           ),
         ],

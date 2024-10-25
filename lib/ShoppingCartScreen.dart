@@ -98,7 +98,9 @@ class _CartScreenState extends State<ShoppingCartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('장바구니'),
         centerTitle: true,
       ),
@@ -272,7 +274,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF863C07),
+          backgroundColor: Color(0xFF5B1333),
         ),
         child: Text('${calculateTotalSelectedPrice()}원 주문하기', style: TextStyle(fontSize: 18,color: Colors.white)),
       ),

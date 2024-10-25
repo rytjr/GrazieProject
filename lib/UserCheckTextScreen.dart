@@ -28,7 +28,9 @@ Grazie는 회원님의 개인정보를 안전하게 관리하며, 수집된 정�
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text("개인정보 수집 및 이용 동의"),
       ),
       body: Padding(
@@ -55,7 +57,7 @@ Grazie는 회원님의 개인정보를 안전하게 관리하며, 수집된 정�
                 // 동의 버튼이 눌렸을 때의 동작
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green, // primary 대신 backgroundColor 사용
+                backgroundColor: Color(0xFF5B1333), // primary 대신 backgroundColor 사용
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text(

@@ -31,8 +31,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.product['name'] ?? '상품 이름 없음'),
+        backgroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -91,27 +93,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               // 추가 설명
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 10, 22, 0),
-                child: Container(
-                  height: 103,
-                  color: Colors.grey[200],
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Text(
-                      "퍼스널 옵션을 선택하여 디카프레인 블론드로 즐겨보세요.\n"
-                          "우유 거품 없이를 원할 경우, 에스프레소를 주문해 주세요.",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.fromLTRB(22, 10, 22, 0),
+              //   child: Container(
+              //     height: 103,
+              //     color: Colors.grey[200],
+              //     child: Padding(
+              //       padding: const EdgeInsets.all(10.0),
+              //       child: Text(
+              //         "퍼스널 옵션을 선택하여 디카프레인 블론드로 즐겨보세요.\n"
+              //             "우유 거품 없이를 원할 경우, 에스프레소를 주문해 주세요.",
+              //         style: TextStyle(
+              //           fontSize: 14,
+              //           color: Colors.grey,
+              //         ),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               // 주문하기 버튼
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 20, 22, 5),
+                padding: const EdgeInsets.fromLTRB(22, 120, 22, 5),
                 child: Column(
                   children: [
                     SizedBox(height: 15),

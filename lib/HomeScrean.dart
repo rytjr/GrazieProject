@@ -278,9 +278,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Color(0xFFFFFFFF).withOpacity(0.6), // 투명도 60%
-        title: Center(
+        backgroundColor: Colors.white,
+        // backgroundColor: Color(0xFFFFFFFF).withOpacity(0.6), // 투명도 60%
+        title: Transform.translate(
+          offset: Offset(0, 0), // 오른쪽으로 10만큼 이동
           child: Text(
             'Grazie',
             style: TextStyle(
@@ -289,9 +292,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        centerTitle: true,
+        centerTitle: true, // 타이틀 중앙 정렬
       ),
       bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.white,
         items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -403,6 +407,7 @@ class _HomeContentState extends State<HomeContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -576,11 +581,26 @@ class _HomeContentState extends State<HomeContent> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        "반갑습니다. $userName님", // 서버에서 받아온 사용자 이름
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: "반갑습니다. ",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            TextSpan(
+                              text: "$userName님", // 사용자 이름 부분
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF5B1333), // 원하는 색상으로 변경
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       SizedBox(height: 5),
@@ -653,6 +673,7 @@ class _OrderContentState extends State<OrderContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: products.isEmpty
           ? Center(child: CircularProgressIndicator()) // 로딩 중일 때 표시
           : ListView.builder(
@@ -747,6 +768,7 @@ class _OtherContentState extends State<OtherContent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Container(
@@ -796,21 +818,21 @@ class _OtherContentState extends State<OtherContent> {
                   : null, // 비활성화 상태면 동작하지 않도록 설정
             ),
             Divider(),
-            ListTile(
-              title: Text("이벤트"),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: isButtonEnabled ? () {
-                // 이벤트 화면으로 이동
-              } : null, // 비활성화 상태면 동작하지 않음
-            ),
-            Divider(),
-            ListTile(
-              title: Text("고객의 소리"),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: isButtonEnabled ? () {
-                // 고객의 소리 화면으로 이동
-              } : null, // 비활성화 상태면 동작하지 않음
-            ),
+            // ListTile(
+            //   title: Text("이벤트"),
+            //   trailing: Icon(Icons.arrow_forward_ios),
+            //   onTap: isButtonEnabled ? () {
+            //     // 이벤트 화면으로 이동
+            //   } : null, // 비활성화 상태면 동작하지 않음
+            // ),
+            // Divider(),
+            // ListTile(
+            //   title: Text("고객의 소리"),
+            //   trailing: Icon(Icons.arrow_forward_ios),
+            //   onTap: isButtonEnabled ? () {
+            //     // 고객의 소리 화면으로 이동
+            //   } : null, // 비활성화 상태면 동작하지 않음
+            // ),
             Spacer(),
             Center(
               child: TextButton(

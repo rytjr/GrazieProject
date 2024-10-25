@@ -16,6 +16,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('비밀번호 찾기'),
         centerTitle: true,
@@ -43,7 +44,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text('비밀번호 찾기'),
+                child: Text('비밀번호 찾기',style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
             SizedBox(height: 20),

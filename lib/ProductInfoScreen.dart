@@ -8,7 +8,9 @@ class ProductInfoScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text("제품 영양 정보"),
       ),
       body: Padding(
@@ -33,12 +35,12 @@ class ProductInfoScreen extends StatelessWidget {
             Divider(color: Colors.grey), // 회색 선 추가
             _buildNutritionRow("카페인", "${product['information']['caffeine']}mg"),
             Divider(color: Colors.grey), // 회색 선 추가
-            Spacer(),
-            Text(
-              "고카페인 함유 | 해당 제품은 고카페인 음료입니다.\n어린이, 임산부, 카페인 민감자는 섭취에 주의해 주세요.",
-              style: TextStyle(color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
+            // Spacer(),
+            // Text(
+            //   "고카페인 함유 | 해당 제품은 고카페인 음료입니다.\n어린이, 임산부, 카페인 민감자는 섭취에 주의해 주세요.",
+            //   style: TextStyle(color: Colors.grey),
+            //   textAlign: TextAlign.center,
+            // ),
           ],
         ),
       ),

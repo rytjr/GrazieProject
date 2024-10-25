@@ -21,7 +21,9 @@ class _TermsOfUseScreenState extends State<TermsOfUseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text("약관 동의"),
         leading: IconButton(
           icon: Icon(Icons.arrow_back), // 뒤로가기 아이콘으로 변경
@@ -50,7 +52,7 @@ class _TermsOfUseScreenState extends State<TermsOfUseScreen> {
             ElevatedButton(
               onPressed: _areRequiredTermsSelected() ? _onNextPressed : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _areRequiredTermsSelected() ? Colors.green : Colors.grey,
+                backgroundColor: _areRequiredTermsSelected() ? Colors.brown : Colors.grey,
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text(

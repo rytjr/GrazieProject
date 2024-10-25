@@ -6,7 +6,9 @@ class TermsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text("이용약관"),
         centerTitle: true,
       ),
@@ -36,22 +38,6 @@ class TermsScreen extends StatelessWidget {
                   builder: (context) => AdmobTextScreen(),
                 ),
               );
-            },
-          ),
-          Divider(),
-          ListTile(
-            title: Text("위치기반 서비스 이용약관"),
-            trailing: Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // 다른 화면으로 이동할 로직 추가
-            },
-          ),
-          Divider(),
-          ListTile(
-            title: Text("나이스정보통신 선불카드 이용약관"),
-            trailing: Icon(Icons.arrow_forward_ios),
-            onTap: () {
-              // 다른 화면으로 이동할 로직 추가
             },
           ),
         ],

@@ -144,9 +144,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _login, // 로그인 버튼 눌렀을 때 API 요청
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
+                    backgroundColor: Color(0xFF5B1333),
                   ),
-                  child: Text('로그인'),
+                  child: Text('로그인' ,style: TextStyle(color: Colors.white)),
                 ),
               ),
               SizedBox(height: 20),
