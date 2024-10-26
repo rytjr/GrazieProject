@@ -126,7 +126,8 @@ class _UserEmailCheckScreenState extends State<UserEmailCheckScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('이메일 확인')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(title: Text('이메일 확인'),backgroundColor: Colors.white,),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

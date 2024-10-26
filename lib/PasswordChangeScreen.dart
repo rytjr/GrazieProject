@@ -59,6 +59,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('알림'),
           content: Text(message),
           actions: [
@@ -135,7 +136,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF863C07),
+                    backgroundColor: Color(0xFF5B1333),
                   ),
                   child: Text('확인',
                       style: TextStyle(fontSize: 18, color: Colors.white)),

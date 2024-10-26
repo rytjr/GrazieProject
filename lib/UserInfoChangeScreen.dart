@@ -78,7 +78,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
           'Authorization': 'Bearer $token',
         },
       );
-
+      print('탈퇴 ${response.body}');
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('회원탈퇴가 완료되었습니다.')),

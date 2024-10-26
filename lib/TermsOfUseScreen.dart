@@ -52,7 +52,7 @@ class _TermsOfUseScreenState extends State<TermsOfUseScreen> {
             ElevatedButton(
               onPressed: _areRequiredTermsSelected() ? _onNextPressed : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _areRequiredTermsSelected() ? Colors.brown : Colors.grey,
+                backgroundColor: _areRequiredTermsSelected() ? Color(0xFF5B1333) : Colors.grey,
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text(

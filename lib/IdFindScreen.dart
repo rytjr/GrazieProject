@@ -44,12 +44,14 @@ class _IdFindScreenState extends State<IdFindScreen> {
           context: context,
           builder: (BuildContext context) {
             return AlertDialog(
+              backgroundColor: Colors.white,
               title: Text('알림'),
               content: Text('새로운 아이디를 이메일로 발송하였습니다!'),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(); // 모달창 닫기
+                    Navigator.pop(context);
                   },
                   child: Text('확인'),
                 ),
@@ -73,7 +75,9 @@ class _IdFindScreenState extends State<IdFindScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('아이디 찾기'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -109,7 +113,7 @@ class _IdFindScreenState extends State<IdFindScreen> {
               child: ElevatedButton(
                 onPressed: _findId, // 아이디 찾기 동작
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: Color(0xFF5B1333),
                 ),
                 child: Text(
                   '아이디 찾기',

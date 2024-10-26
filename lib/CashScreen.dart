@@ -13,7 +13,9 @@ class _CashReceiptScreenState extends State<CashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: Text('현금 영수증'),
       ),
       body: Padding(
@@ -104,7 +106,7 @@ class _CashReceiptScreenState extends State<CashScreen> {
           // 신청하기 버튼 클릭 시 동작
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF880E4F), // 와인색 버튼
+          backgroundColor: Color(0xFF5B1333), // 와인색 버튼
         ),
         child: Text('신청하기', style: TextStyle(fontSize: 18, color: Colors.white)),
       ),

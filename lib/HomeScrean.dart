@@ -55,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = index;
     });
 
-    if (index == 1) { // Order 탭을 클릭했을 때
+    if (index == 1) {
       _showOrderModal(context);
     }
   }
@@ -89,15 +89,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Expanded(
                 child: isLoading
-                    ? Center(child: CircularProgressIndicator()) // 로딩 중일 때
+                    ? Center(child: CircularProgressIndicator())
                     : ListView.builder(
                   itemCount: stores.length,
                   itemBuilder: (context, index) {
                     return _buildStoreTile(
                       stores[index]['name'],
                       stores[index]['location'],
-                      // stores[index]['image'],
-                      stores[index], // 매장 전체 정보
+                      stores[index],
                     );
                   },
                 ),
@@ -109,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void showStoreDetailsModal(BuildContext context, String title, String address,String operatingHours, String additionalInfo, dynamic store) {
+  void showStoreDetailsModal(BuildContext context, String title, String address, String operatingHours, String additionalInfo, dynamic store) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -117,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final double screenHeight = MediaQuery.of(context).size.height;
         return Container(
           height: screenHeight - 60,
+          color: Colors.white,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
@@ -138,7 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                     SizedBox(height: 10),
-                    SizedBox(height: 20),
                     Text(title, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                     Text(address, style: TextStyle(fontSize: 18, color: Colors.grey[800])),
                     SizedBox(height: 10),
@@ -342,9 +341,8 @@ class _HomeContentState extends State<HomeContent> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, () {
-
       fetchProducts();
-      checkLoginStatus();  // 로그인 상태 확인 먼저 실행
+      checkLoginStatus(); // 로그인 상태 확인 먼저 실행
     });
   }
 
@@ -364,22 +362,16 @@ class _HomeContentState extends State<HomeContent> {
     String? token = await secureStorageService.getToken();
     print('가져와져라 $token');
 
-
-    print('toekb');
-    print(token);
     if (token != null) {
-      print(30030);
       try {
-        final response = await http.get(Uri.parse(
-          'http://34.64.110.210:8080/users/readProfile'),
+        final response = await http.get(
+          Uri.parse('http://34.64.110.210:8080/users/readProfile'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token'
           },
         );
         final decodedResponseBody = utf8.decode(response.bodyBytes);
-        print('Response status: ${response.body}');
-        print(response.statusCode);
         if (response.statusCode == 200) {
           final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
           setState(() {
@@ -418,8 +410,8 @@ class _HomeContentState extends State<HomeContent> {
               fit: BoxFit.cover,
             ),
             isLoggedIn
-                ? _buildLoggedInUI()  // 로그인된 경우
-                : _buildLoggedOutUI(),  // 로그인되지 않은 경우
+                ? _buildLoggedInUI() // 로그인된 경우
+                : _buildLoggedOutUI(), // 로그인되지 않은 경우
             SizedBox(height: 15), // 버튼과 리스트 사이의 간격
             SizedBox(
               height: 130, // 제품 리스트 높이 설정
@@ -429,24 +421,49 @@ class _HomeContentState extends State<HomeContent> {
                 scrollDirection: Axis.horizontal,
                 itemCount: products.length,
                 itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Column(
-                      children: [
-                        ClipOval(
-                          child: Image.network('http://34.64.110.210:8080/' +
-                            products[index]['image'],
-                            width: 70,
-                            height: 70,
-                            fit: BoxFit.cover,
+                  return GestureDetector(
+                    onTap: () {
+                      // 제품을 누르면 OrderContent 화면으로 이동
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(
+                            product: products[index], // 제품 정보 전달
+                            storeId: '2', // storeId 전달
+                            orderOption: '매장 이용', // orderOption 전달 (매장 이용 또는 To-Go)
+                            tk: '',
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(products[index]['name'],
-                            style: TextStyle(fontSize: 16)),
-                        Text('${products[index]['smallPrice']}원',
-                            style: TextStyle(fontSize: 14)),
-                      ],
+                      );
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Column(
+                        children: [
+                          ClipOval(
+                            child: SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: Image.network(
+                                'http://34.64.110.210:8080/' + products[index]['image'],
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Icon(Icons.error);
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            products[index]['name'],
+                            style: TextStyle(fontSize: 16),
+                          ),
+                          Text(
+                            '${products[index]['smallPrice']}원',
+                            style: TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -454,7 +471,7 @@ class _HomeContentState extends State<HomeContent> {
             ),
             SizedBox(height: 23), // 리스트 사이의 간격
             Padding(
-              padding: const EdgeInsets.fromLTRB(15, 20, 15, 0),  // 패딩 설정
+              padding: const EdgeInsets.fromLTRB(15, 20, 15, 0), // 패딩 설정
               child: Column(
                 children: [
                   Padding(
@@ -681,13 +698,16 @@ class _OrderContentState extends State<OrderContent> {
         itemBuilder: (context, index) {
           print("Product data: ${products[index]}");
           return ListTile(
-            leading: Image.network(
-              'http://34.64.110.210:8080/' +
-              products[index]['image'],
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) {
-                return Icon(Icons.error);
-              },
+            leading: SizedBox(
+              width: 80, // 원하는 고정 너비
+              height: 80, // 원하는 고정 높이
+              child: Image.network(
+                'http://34.64.110.210:8080/' + products[index]['image'],
+                fit: BoxFit.cover, // 이미지 크기에 맞추기
+                errorBuilder: (context, error, stackTrace) {
+                  return Icon(Icons.error);
+                },
+              ),
             ),
             title: Text(products[index]['name']),
             subtitle: Text(products[index]['smallPrice'].toString()),
@@ -699,7 +719,7 @@ class _OrderContentState extends State<OrderContent> {
                     product: products[index],  // 제품 정보 전달
                     storeId: widget.storeId.toString(),  // storeId 전달
                     orderOption: widget.orderMode, // orderOption 전달 (매장 이용 또는 To-Go)
-                    tk : tokentest,
+                    tk: tokentest,
                   ),
                 ),
               );
@@ -777,17 +797,33 @@ class _OtherContentState extends State<OtherContent> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Text(
-                "$userName님\n환영합니다!!", // 받아온 이름을 표시
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+            Align(
+              alignment: Alignment.center,
+              child: RichText(
+                textAlign: TextAlign.center, // 텍스트 자체의 중앙 정렬
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "$userName님\n",
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF5B1333),
+                      ),
+                    ),
+                    TextSpan(
+                      text: "반갑습니다.",
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
+
             SizedBox(height: 20),
             // 4개의 버튼을 균등하게 배치할 수 있도록 Row 수정
             Row(

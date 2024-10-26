@@ -10,11 +10,10 @@ import 'package:intl/intl.dart'; // 날짜 형식을 맞추기 위해 추가
 
 class ProductOrderScreen extends StatefulWidget {
   final dynamic product;
-  final String storeId;  // 매장 ID 추가
-  final String orderOption;  // 매장이용 or To-Go 추가
+  final String storeId; // 매장 ID 추가
+  final String orderOption; // 매장이용 or To-Go 추가
   final String selectedTemperature; // 선택한 온도 추가
   final String tk;
-
 
   ProductOrderScreen({
     required this.product,
@@ -36,7 +35,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int? couponId;
   int orderprice = 0;
   final _storage = FlutterSecureStorage(); // SecureStorage 초기화
-
 
   // 퍼스널 옵션 기본값 설정
   String selectedIce = "NORMAL"; // 얼음 옵션
@@ -80,7 +78,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token'
-      },
+        },
         body: jsonEncode(body),
       );
       print('haha ${response.statusCode}');
@@ -142,9 +140,16 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     return additionalPrice;
   }
 
-  // 총 가격 계산 (기본 가격 + 추가 가격)
+  // 총 가격 계산 (기본 가격 + 추가 가격 + ICE 옵션에 따른 추가 금액)
   int _getTotalPrice() {
-    return (_getBasePrice() + _calculateAdditionalPrice()) * quantity;
+    int totalPrice = (_getBasePrice() + _calculateAdditionalPrice()) * quantity;
+
+    // ICE 선택 시 300원 추가
+    if (widget.selectedTemperature == 'ICE') {
+      totalPrice += 300;
+    }
+
+    return totalPrice;
   }
 
   @override
@@ -211,7 +216,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   ),
                   hintText: "예: 얼음은 적게, 시럽 추가",
                   hintStyle: TextStyle(color: Colors.grey[400]),
-                  // prefixIcon: Icon(Icons.note, color: Color(0xFF5B1333)),
                   filled: true,
                   fillColor: Colors.grey[100], // 배경색 추가
                   border: OutlineInputBorder(
@@ -297,7 +301,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        keypoint = 1;
+                        keypoint = 0;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -338,6 +342,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       ),
     );
   }
+
   // 사이즈 옵션 위젯 빌드
   Widget _buildSizeOption(String title, int price) {
     bool isSelected = selectedSize == title;
@@ -383,6 +388,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   // 퍼스널 옵션 모달 창
   void _showPersonalOptionModal(BuildContext context) {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
@@ -481,8 +487,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       onPressed: () {
                         Navigator.pop(context); // 모달 닫기
                       },
-                      child: Text("확인",style: TextStyle(fontSize: 18,color: Color(0xFF5B1333))),
-
+                      child: Text("확인", style: TextStyle(fontSize: 18, color: Color(0xFF5B1333))),
                     ),
                   ],
                 ),

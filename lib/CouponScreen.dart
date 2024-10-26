@@ -48,9 +48,11 @@ class _CouponScreenState extends State<CouponScreen> {
   // 쿠폰 발급 모달창 띄우기
   void _showCouponModal(String couponName, String couponId) {
     showDialog(
+
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('쿠폰 발급'),
           content: Text('$couponName 쿠폰을 발급하시겠습니까?'),
           actions: [
@@ -62,10 +64,35 @@ class _CouponScreenState extends State<CouponScreen> {
             ),
             TextButton(
               child: Text('확인'),
-              onPressed: () {
-                setState(() {
-                  selectedCouponId = couponId; // 선택된 쿠폰 ID 저장
-                });
+              onPressed: () async {
+                // 쿠폰 발급 통신 요청
+                SecureStorageService storageService = SecureStorageService();
+                String? token = await storageService.getToken();
+
+                final response = await http.post(
+                  Uri.parse('http://34.64.110.210:8080/api/coupons/issue'),
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer $token'
+                  },
+                  body: jsonEncode({'couponId': couponId}),
+                );
+
+                if (response.statusCode == 200) {
+                  // 발급 성공 시 처리
+                  setState(() {
+                    selectedCouponId = couponId; // 선택된 쿠폰 ID 저장
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('$couponName 쿠폰이 발급되었습니다.')),
+                  );
+                } else {
+                  // 발급 실패 시 처리
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('쿠폰 발급에 실패했습니다.')),
+                  );
+                }
+
                 Navigator.of(context).pop(); // 모달창 닫기
               },
             ),

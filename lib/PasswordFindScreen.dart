@@ -1,6 +1,7 @@
 import 'dart:convert'; // JSON 파싱을 위해 추가
 import 'package:flutter/material.dart';
 import 'package:fluttertest/LoginScreen.dart';
+import 'package:fluttertest/IdFindScreen.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/UserInScreen.dart';
 import 'package:http/http.dart' as http;
@@ -39,7 +40,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                   await _sendNewPassword(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF863C07),
+                  backgroundColor: Color(0xFF5B1333),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -67,7 +68,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => PasswordFindScreen()),
+                            builder: (context) => IdFindScreen()),
                       );
                     },
                     child: Text('아이디 찾기'),
@@ -111,7 +112,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
   // 비밀번호 변경 요청
   Future<void> _sendNewPassword(BuildContext context) async {
     String email = _emailController.text; // 이메일 값 가져오기
-
+    print("이메일 : $email");
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('이메일을 입력해주세요.')),
@@ -120,13 +121,13 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
     }
 
     final response = await http.post(
-      Uri.parse('http://34.64.110.210:8080/request-temp-password'),
+      Uri.parse('http://34.64.110.210:8080/email/request-temp-password'),
       headers: {
         'Content-Type': 'application/json',
       },
-      body: json.encode({"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
+      body: jsonEncode({"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
     );
-    print("비밀번호 찾기 ${response.body},$email");
+    print("비밀번호 찾기 : ${response.body},$email");
     if (response.statusCode == 200) {
       // 서버로부터 반환된 JSON 데이터에서 비밀번호를 추출
       final Map<String, dynamic> responseData = json.decode(response.body);
