@@ -413,6 +413,7 @@ class _HomeContentState extends State<HomeContent> {
                 ? _buildLoggedInUI() // 로그인된 경우
                 : _buildLoggedOutUI(), // 로그인되지 않은 경우
             SizedBox(height: 15), // 버튼과 리스트 사이의 간격
+            SizedBox(height: 20),
             SizedBox(
               height: 130, // 제품 리스트 높이 설정
               child: products.isEmpty
@@ -477,7 +478,7 @@ class _HomeContentState extends State<HomeContent> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Image.asset(
-                      'android/assets/images/image.jpg',
+                      'android/assets/images/event4.png',
                       width: double.infinity,
                       height: 110,
                       fit: BoxFit.cover,
@@ -486,7 +487,7 @@ class _HomeContentState extends State<HomeContent> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Image.asset(
-                      'android/assets/images/image.jpg',
+                      'android/assets/images/event2.png',
                       width: double.infinity,
                       height: 110,
                       fit: BoxFit.cover,
@@ -495,7 +496,7 @@ class _HomeContentState extends State<HomeContent> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
                     child: Image.asset(
-                      'android/assets/images/image.jpg',
+                      'android/assets/images/event3.png',
                       width: double.infinity,
                       height: 110,
                       fit: BoxFit.cover,
@@ -516,7 +517,7 @@ class _HomeContentState extends State<HomeContent> {
       padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
       child: SizedBox(
         width: double.infinity,
-        height: 110,
+        height: 120,
         child: Column(
           children: [
             Text(

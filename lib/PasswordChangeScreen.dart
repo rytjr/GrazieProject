@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/HomeScrean.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -47,6 +48,12 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
     if (response.statusCode == 200) {
       // 비밀번호 변경 성공 모달 띄우기
       _showResultModal('비밀번호가 변경되었습니다.', true);
+      await storageService.deleteToken();
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => HomeScreen()), // 회원정보 수정 화면으로 이동
+      );
     } else {
       // 비밀번호 변경 실패 모달 띄우기
       _showResultModal('현재 비밀번호를 확인해 주세요.', false);
@@ -81,71 +88,87 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text('비밀번호 변경'),
         centerTitle: true,
       ),
-      body: SingleChildScrollView( // 스크롤 가능하도록 추가
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _currentPasswordController,
-                decoration: InputDecoration(
-                  labelText: '현재 비밀번호',
-                ),
-                obscureText: true,
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _newPasswordController,
-                decoration: InputDecoration(
-                  labelText: '새 비밀번호',
-                ),
-                obscureText: true,
-                onChanged: (value) => _checkPasswordMatch(), // 입력할 때마다 비교
-              ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(
-                  labelText: '새 비밀번호 확인',
-                ),
-                obscureText: true,
-                onChanged: (value) => _checkPasswordMatch(), // 입력할 때마다 비교
-              ),
-              SizedBox(height: 10),
-              if (_errorMessage.isNotEmpty)
-                Text(
-                  _errorMessage,
-                  style: TextStyle(color: Colors.white),
-                ),
-              SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (_newPasswordController.text ==
-                        _confirmPasswordController.text) {
-                      _changePassword();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF5B1333),
+      body: Stack(
+        children: [
+          // 스크롤 가능한 비밀번호 입력 필드들
+          Padding(
+            padding: const EdgeInsets.only(bottom: 80), // 버튼과 겹치지 않도록 여유 공간 확보
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _currentPasswordController,
+                    decoration: InputDecoration(
+                      labelText: '현재 비밀번호',
+                    ),
+                    obscureText: true,
                   ),
-                  child: Text('확인',
-                      style: TextStyle(fontSize: 18, color: Colors.white)),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _newPasswordController,
+                    decoration: InputDecoration(
+                      labelText: '새 비밀번호',
+                    ),
+                    obscureText: true,
+                    onChanged: (value) => _checkPasswordMatch(),
+                  ),
+                  SizedBox(height: 20),
+                  TextField(
+                    controller: _confirmPasswordController,
+                    decoration: InputDecoration(
+                      labelText: '새 비밀번호 확인',
+                    ),
+                    obscureText: true,
+                    onChanged: (value) => _checkPasswordMatch(),
+                  ),
+                  SizedBox(height: 450),
+                  if (_errorMessage.isNotEmpty)
+                    Text(
+                      _errorMessage,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          // 화면 하단에서 20px 위로 고정된 버튼
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 20, // 화면 맨 하단에서 20px 위로 고정
+            left: 16,
+            right: 16,
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  if (_newPasswordController.text ==
+                      _confirmPasswordController.text) {
+                    _changePassword();
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF5B1333),
+                ),
+                child: Text(
+                  '확인',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
+
 }

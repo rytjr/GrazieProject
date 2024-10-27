@@ -59,6 +59,7 @@ class _NicknameScreenState extends State<NicknameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text('닉네임 설정'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertest/CouponScreen.dart';
 import 'package:fluttertest/NicknameScreen.dart';
+import 'package:fluttertest/PasswordChangeScreen.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/UserInfoChangeScreen.dart';
 import 'package:http/http.dart' as http;
@@ -82,6 +83,17 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => NicknameScreen()), // 닉네임 화면으로 이동
+                );
+              },
+            ),
+            Divider(), 
+            ListTile(
+              title: Text('비밀번호 변경'),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PasswordChangeScreen()), // 회원정보 수정 화면으로 이동
                 );
               },
             ),

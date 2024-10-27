@@ -13,7 +13,7 @@ class PasswordFindScreen extends StatefulWidget {
 
 class _PasswordFindScreenState extends State<PasswordFindScreen> {
   final TextEditingController _emailController = TextEditingController(); // 이메일 입력값을 제어하는 컨트롤러
-
+  final TextEditingController _idController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,8 +30,10 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
+            _buildInputField('아이디', _idController),
+            SizedBox(height: 20),
             _buildInputField('이메일', _emailController),
-            SizedBox(height: 40),
+            SizedBox(height: 30),
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -48,7 +50,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                 child: Text('비밀번호 찾기',style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 10),
             Center(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -112,6 +114,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
   // 비밀번호 변경 요청
   Future<void> _sendNewPassword(BuildContext context) async {
     String email = _emailController.text; // 이메일 값 가져오기
+    String id = _idController.text; // 이메일 값 가져오기
     print("이메일 : $email");
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,7 +122,6 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
       );
       return;
     }
-
     final response = await http.post(
       Uri.parse('http://34.64.110.210:8080/email/request-temp-password'),
       headers: {
@@ -129,30 +131,12 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
     );
     print("비밀번호 찾기 : ${response.body},$email");
     if (response.statusCode == 200) {
-      // 서버로부터 반환된 JSON 데이터에서 비밀번호를 추출
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      final newPassword = responseData['newPassword']; // 서버에서 반환된 비밀번호
-
-      // 모달 창에 새 비밀번호를 표시하고 확인을 누르면 로그인 화면으로 이동
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            content: Text('새 비밀번호: $newPassword'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => LoginScreen()),
-                  );
-                },
-                child: Text('확인'),
-              ),
-            ],
-          );
-        },
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LoginScreen()),
       );
+
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('비밀번호 변경에 실패했습니다.')),

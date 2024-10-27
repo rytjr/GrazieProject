@@ -75,6 +75,7 @@ class _IdFindScreenState extends State<IdFindScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -105,7 +106,7 @@ class _IdFindScreenState extends State<IdFindScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 630),
             // 아이디 찾기 버튼
             SizedBox(
               width: double.infinity,

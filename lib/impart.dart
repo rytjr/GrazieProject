@@ -8,13 +8,18 @@ import 'package:iamport_flutter/model/payment_data.dart';
 class impart extends StatelessWidget {
   final int finalprice;
   final String name;
+  final String phone;
+  final String email;
 
   impart({
     required this.finalprice,
     required this.name,
+    required this.phone,
+    required this.email,
   });
   @override
   Widget build(BuildContext context) {
+    print("결제중 $phone");
     return IamportPayment(
       appBar: new AppBar(
         title: new Text('아임포트 결제'),
@@ -30,24 +35,23 @@ class impart extends StatelessWidget {
               Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20)),
             ],
           ),
-        ),
-      ),
+        ), //imp62488455
+      ),  //imp23488700
       /* [필수입력] 가맹점 식별코드 */
-      userCode: 'imp62488455',
+      userCode: 'imp23488700',
       /* [필수입력] 결제 데이터 */
       data: PaymentData(
           pg: 'kakaopay',                                          // PG사
           payMethod: 'card',                                           // 결제수단
-          name: '아임포트 결제데이터 분석',                                  // 주문명
           merchantUid: 'mid_${DateTime.now().millisecondsSinceEpoch}', // 주문번호
-          amount: finalprice,                                               // 결제금액
+          name: '아임포트 결제데이터 분석',
+          amount: finalprice,
+          currency: 'KRW',// 결제금액
+          language: "KO",
           buyerName: name,                                           // 구매자 이름
-          buyerTel: '01012345678',                                     // 구매자 연락처
-          buyerEmail: 'example@naver.com',                             // 구매자 이메일
-          buyerAddr: '서울시 강남구 신사동 661-16',                         // 구매자 주소
-          buyerPostcode: '06018',                                      // 구매자 우편번호
-          appScheme: 'example',                                        // 앱 URL scheme
-          cardQuota : [2,3]                                            //결제창 UI 내 할부개월수 제한
+          buyerTel: phone,                                     // 구매자 연락처
+          buyerEmail: email,                                // 구매자 우편번호
+          appScheme: 'example',                                         //결제창 UI 내 할부개월수 제한
       ),
       /* [필수입력] 콜백 함수 */
       callback: (Map<String, String> result) {

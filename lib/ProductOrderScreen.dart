@@ -155,6 +155,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -236,7 +237,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 },
               ),
               SizedBox(height: 110),
-              SizedBox(height: 20),
+              SizedBox(height: 170),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

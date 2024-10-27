@@ -93,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -111,6 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: Color(0xFF5B1333),
                   ),
                 ),
               ),
@@ -175,21 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text('비밀번호 찾기'),
-                  ),
-                  Text('|'),
-                  TextButton(
-                    onPressed: () {
-                      // 비밀번호 변경 동작
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => PasswordChangeScreen()),
-                      );
-                    },
-                    child: Text('비밀번호 변경'),
-                  ),
+                  )
                 ],
               ),
-              SizedBox(height: 40), // Spacer 대신 여유 공간 추가
+              SizedBox(height: 280), // Spacer 대신 여유 공간 추가
               Center(
                 child: Column(
                   children: [

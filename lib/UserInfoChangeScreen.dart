@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertest/HomeScrean.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -22,13 +23,15 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
+      Uri.parse('http://34.64.110.210:8080/api/user-info'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
     final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print("정보 조회 결과 ${response.body}");
+    print('내정보 : $decodedResponseBody');
     if (response.statusCode == 200) {
       setState(() {
         userProfile = jsonDecode(decodedResponseBody);
@@ -43,13 +46,19 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     try {
-      final response = await http.put(
-        Uri.parse('http://34.64.110.210:8080/users/update'),
+      final response = await http.patch(
+        Uri.parse('http://34.64.110.210:8080/api/user-info'), // PATCH 메서드 사용
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(userProfile),
+        body: jsonEncode({
+          "email": userProfile['email'],
+          "name": userProfile['name'],
+          "phone": userProfile['phone'],
+          "nickname": userProfile['nickname'],
+          "gender": userProfile['gender'],
+        }),
       );
 
       if (response.statusCode == 200) {
@@ -98,76 +107,106 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       appBar: AppBar(
         backgroundColor: Colors.white,
-
         title: Text('회원정보 수정'),
         centerTitle: true, // 타이틀 중앙 정렬
       ),
-
-      body: userProfile.isEmpty
-          ? Center(child: CircularProgressIndicator())
-          : SingleChildScrollView( // 스크롤 가능하도록 SingleChildScrollView 추가
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20),
-            Text('이름'),
-            Text(userProfile['name'] ?? ''),
-            Divider(),
-            Text('전화번호'),
-            Text(userProfile['phone'] ?? ''),
-            Divider(),
-            Text('닉네임'),
-            Text(userProfile['nickname'] ?? ''),
-            Divider(),
-            Text('휴대폰'),
-            Text(userProfile['phone'] ?? ''),
-            Divider(),
-            SizedBox(height: 20),
-            Text('추가정보', style: TextStyle(fontWeight: FontWeight.bold)),
-            TextField(
-              onChanged: (value) => userProfile['email'] = value,
-              decoration: InputDecoration(labelText: '이메일'),
-              controller: TextEditingController(text: userProfile['email']),
-            ),
-            TextField(
-              onChanged: (value) => userProfile['gender'] = value,
-              decoration: InputDecoration(labelText: '성별'),
-              controller: TextEditingController(text: userProfile['gender']),
-            ),
-            SizedBox(height: 130),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: Stack(
+        children: [
+          userProfile.isEmpty
+              ? Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                OutlinedButton(
-                onPressed: () {
-                deleteUserAccount(); // 회원탈퇴 요청
-                },
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Color(0xFF5B1333),
-                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30), // 동일한 패딩 적용
-                    minimumSize: Size(0, 48), // 높이 48 설정 (원하는 크기로 조정 가능)
-                  ),
-                  child: Text('회원탈퇴', style: TextStyle(color: Colors.white)),
+                SizedBox(height: 20),
+                Text('이름'),
+                Text(userProfile['name'] ?? ''),
+                Divider(),
+                Text('전화번호'),
+                Text(userProfile['phone'] ?? ''),
+                Divider(),
+                Text('닉네임'),
+                Text(userProfile['nickname'] ?? ''),
+                Divider(),
+                Text('휴대폰'),
+                Text(userProfile['phone'] ?? ''),
+                Divider(),
+                SizedBox(height: 20),
+                Text('추가정보', style: TextStyle(fontWeight: FontWeight.bold)),
+                TextField(
+                  onChanged: (value) => userProfile['email'] = value,
+                  decoration: InputDecoration(labelText: '이메일'),
+                  controller: TextEditingController(text: userProfile['email']),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    updateUserProfile(); // 수정 완료 요청
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF5B1333),
-                    padding: EdgeInsets.symmetric(vertical: 15, horizontal: 30), // 동일한 패딩 적용
-                    minimumSize: Size(0, 48), // 높이 48 설정
-                  ),
-                  child: Text('수정완료', style: TextStyle(color: Colors.white)),
+                TextField(
+                  onChanged: (value) => userProfile['gender'] = value,
+                  decoration: InputDecoration(labelText: '성별'),
+                  controller: TextEditingController(text: userProfile['gender']),
                 ),
-
+                SizedBox(height: 310), // 버튼과 겹치지 않도록 추가 간격 확보
               ],
             ),
-          ],
-        ),
+          ),
+
+          // 로그아웃 버튼 (하단 고정 수정완료 버튼 위 15px)
+          Positioned(
+            bottom: 70, // 화면 하단에서 70px 위로 고정 (수정완료 버튼보다 15px 위)
+            left: 16,
+            right: 16,
+            child: Center(
+              child: TextButton(
+                onPressed: () {
+                  deleteUserAccount(); // 회원탈퇴 요청
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => HomeScreen()), // 회원정보 수정 화면으로 이동
+                  );
+                },
+                child: Text(
+                  '회원탈퇴',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 수정완료 버튼 (하단 고정)
+          Positioned(
+            bottom: 15, // 화면 하단에서 15px 위로 고정
+            left: 16,
+            right: 16,
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () {
+                  updateUserProfile().then((_) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => UserInfoChangeScreen()), // 대체하여 새로 로드
+                    );
+                  });
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF5B1333),
+                ),
+                child: Text(
+                  '수정완료',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

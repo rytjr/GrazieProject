@@ -69,7 +69,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         'cartItemId': cartItems[index]['cartItemId'].toString(),
       }),
     );
-    print("이유 ${response.body}");
+    print("이유 : ${response.body}");
     if (response.statusCode == 200) {
       print('Quantity increased successfully');
     } else {
@@ -281,15 +281,14 @@ class _CartScreenState extends State<ShoppingCartScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => PaymentScreen(
-                product: cartItems,
-                storeId: '',
-                orderOption: '매장 이용',
+                product: {'product_id': 1, 'name': '커피', 'price': 5000, 'image': 'image_url'},  // 예시 데이터
+                storeId: '1',
+                orderOption: widget.orderoption,
                 quantity: 1,
-                selectedCup: 'small',
-                specialRequest: '',
-                tk : '',
-                keypoint : 0,
-                orderprice : 0,
+                selectedCup: 'Solo',
+                tk: '1',
+                keypoint: 1,
+                orderprice: 0,
               ),
             ),
           );

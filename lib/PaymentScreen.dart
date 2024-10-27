@@ -45,6 +45,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
   String impuid = '';
   int finlaprice = 0;
   String name = '';
+  String phone = '';
+  String email = '';
   @override
   void initState() {
     super.initState();
@@ -84,7 +86,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     );
     final decodedResponseBody = utf8.decode(response.bodyBytes);
 
-    print('order' + decodedResponseBody);
+    print('orderr : ' + decodedResponseBody);
     if (response.statusCode == 200) {
       setState(() {
         orders = jsonDecode(decodedResponseBody);
@@ -117,6 +119,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
       setState(() {
         name = data['name'];
+        phone = data['phone'];
+        email = data['email'];
         isLoading = false;
       });
       print(name);
@@ -258,6 +262,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -288,7 +293,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             // Divider(thickness: 1, color: Colors.grey[300]),
             // _buildReceiptSection(),
             // SizedBox(height: 20),
-            SizedBox(height: 60),
+            SizedBox(height: 300),
             _buildTotalPriceRow(),
             SizedBox(height: 10),
 
@@ -449,7 +454,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => impart(finalprice:  finlaprice, name: name),
+              builder: (context) => impart(finalprice:  finlaprice, name: name, phone: phone, email: email),
             ),
           );
           // 결제 결과 처리

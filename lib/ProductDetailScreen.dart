@@ -31,6 +31,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.product['name'] ?? '상품 이름 없음'),
@@ -93,6 +94,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               // 주문하기 버튼
+              SizedBox(height: 150),
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 120, 22, 5),
                 child: Column(

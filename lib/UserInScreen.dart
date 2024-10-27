@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fluttertest/LoginScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io';
-import 'package:path_provider/path_provider.dart';
 
 class UserInScreen extends StatefulWidget {
   @override
@@ -18,6 +15,7 @@ class _UserInScreenState extends State<UserInScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   bool _isButtonEnabled = false;
 
@@ -32,8 +30,6 @@ class _UserInScreenState extends State<UserInScreen> {
         'phone': _phoneController.text,
       };
 
-      print('전송할 데이터: ${jsonEncode(requestData)}');
-
       try {
         final response = await http.post(
           Uri.parse('http://34.64.110.210:8080/users/join'),
@@ -43,19 +39,16 @@ class _UserInScreenState extends State<UserInScreen> {
           body: jsonEncode(requestData),
         );
 
-        print('응답 상태 코드: ${response.statusCode}');
-        print('응답 본문: ${response.body}');
-
         if (response.statusCode == 201) {
-          final userId = int.tryParse(response.body); // 응답 본문을 int로 변환
-
+          final userId = int.tryParse(response.body);
           if (userId != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('회원가입이 완료되었습니다.')),
             );
-
-            await _sendAdditionalInfo(userId);
-            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('서버 응답 형식이 올바르지 않습니다.')),
@@ -67,7 +60,6 @@ class _UserInScreenState extends State<UserInScreen> {
           );
         }
       } catch (e) {
-        print('오류 발생: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('네트워크 오류가 발생했습니다.')),
         );
@@ -75,44 +67,10 @@ class _UserInScreenState extends State<UserInScreen> {
     }
   }
 
-  Future<void> _sendAdditionalInfo(int userId) async {
-    final uri = Uri.parse('http://34.64.110.210:8080/users/additional-info/$userId/additionalInfoJoin?additionalInfo=null');
-
-    try {
-      // MultipartRequest로 변경
-      final request = http.MultipartRequest('POST', uri)
-        ..headers['Content-Type'] = 'multipart/form-data';
-
-      // 필요시 profileImage 파일을 추가하거나, 빈 데이터를 추가하여 multipart 형식 충족
-      request.fields['profileImage'] = ''; // 빈 값으로 설정
-
-      // 서버에 요청
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
-
-      print('추가 정보 응답 상태 코드: ${response.statusCode}');
-      print('추가 정보 응답 본문: $responseBody');
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('추가 정보가 성공적으로 저장되었습니다.')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('추가 정보 저장에 실패했습니다. 다시 시도해주세요.')),
-        );
-      }
-    } catch (e) {
-      print('추가 정보 전송 오류 발생: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('추가 정보 전송 중 네트워크 오류가 발생했습니다.')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -137,7 +95,7 @@ class _UserInScreenState extends State<UserInScreen> {
               children: [
                 Text(
                   '아이디와 비밀번호를\n입력해 주세요.',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold , color: Color(0xFF5B1333)),
                 ),
                 SizedBox(height: 30),
                 TextFormField(
@@ -153,10 +111,16 @@ class _UserInScreenState extends State<UserInScreen> {
                 SizedBox(height: 10),
                 TextFormField(
                   controller: _phoneController,
+                  keyboardType: TextInputType.number, // 숫자 키보드 사용
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly, // 숫자만 입력 가능
+                  ],
                   decoration: InputDecoration(labelText: '전화번호'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '전화번호를 입력해 주세요.';
+                    } else if (value.length != 11) {
+                      return '전화번호는 11자리여야 합니다.';
                     }
                     return null;
                   },
@@ -194,6 +158,23 @@ class _UserInScreenState extends State<UserInScreen> {
                 ),
                 SizedBox(height: 10),
                 TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: '비밀번호 확인',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return '비밀번호를 다시 입력해 주세요.';
+                    }
+                    if (value != _passwordController.text) {
+                      return '비밀번호가 일치하지 않습니다.';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 10),
+                TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(labelText: '이메일'),
                   validator: (value) {
@@ -203,19 +184,15 @@ class _UserInScreenState extends State<UserInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 30),
+                SizedBox(height: 160),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _isButtonEnabled
-                        ? () async {
-                      await _signUp(); // 회원가입 요청
-                    }
-                        : null, // 입력이 완료되지 않으면 버튼 비활성화
+                    onPressed: _isButtonEnabled ? () => _signUp() : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF5B1333), // 버튼 색상
+                      backgroundColor: Color(0xFF5B1333),
                       padding: EdgeInsets.symmetric(vertical: 16),
-                      disabledBackgroundColor: Colors.grey[300], // 비활성화 시 색상
+                      disabledBackgroundColor: Colors.grey[300],
                     ),
                     child: Text(
                       '확인',

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:intl/intl.dart';
 
 class OrderListScreen extends StatefulWidget {
   @override
@@ -11,15 +11,14 @@ class OrderListScreen extends StatefulWidget {
 
 class _OrderListScreenState extends State<OrderListScreen> {
   String selectedPeriod = "1개월";
-  List<dynamic> orderList = []; // 주문 내역 리스트
-  String searchQuery = ""; // 검색어
+  List<dynamic> orderList = [];
+  List<dynamic> filteredOrderList = [];
+  String searchQuery = "";
   String name = '';
-
 
   Future<void> fetchGetName() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
-    print("제발2 $token");
 
     final response = await http.get(
       Uri.parse('http://34.64.110.210:8080/users/readProfile'),
@@ -31,14 +30,11 @@ class _OrderListScreenState extends State<OrderListScreen> {
 
     if (response.statusCode == 200) {
       final decodedResponseBody = utf8.decode(response.bodyBytes);
-      print('order' + decodedResponseBody);
 
       setState(() {
         final Map<String, dynamic> data = jsonDecode(decodedResponseBody);
-        name = data['name']; // 사용자 이름 설정
+        name = data['name'];
       });
-
-      print("이름 ㅎㅎ : $name");
     } else {
       throw Exception('Failed to load profile');
     }
@@ -51,19 +47,18 @@ class _OrderListScreenState extends State<OrderListScreen> {
   }
 
   Future<void> _initializeData() async {
-    await fetchGetName(); // 사용자 이름 불러오기
-    await Future.delayed(Duration(seconds: 1)); // 1초 대기
-    fetchOrderList(); // 주문 내역 불러오기
+    await fetchGetName();
+    await Future.delayed(Duration(seconds: 1));
+    await fetchOrderList();
+    applyFilters();
   }
 
-  void fetchOrderList() async {
-    // 주문 내역을 불러오는 로직 (API 호출)
+  Future<void> fetchOrderList() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
 
-    // API 경로를 확인하세요. `$name`이 올바르게 설정되었는지 확인
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/api/pay/get/list/$name'),
+      Uri.parse('http://34.64.110.210:8080/api/order/get/user'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -71,27 +66,57 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
 
     if (response.statusCode == 200) {
-      final decodedResponseBody = utf8.decode(response.bodyBytes);
-      print('주문내역 : $decodedResponseBody');
-
       setState(() {
-        orderList = jsonDecode(decodedResponseBody);
+        orderList = jsonDecode(utf8.decode(response.bodyBytes));
+        filteredOrderList = orderList;
       });
     } else {
       throw Exception('Failed to load orders');
     }
   }
+
   void filterByDate(String period) {
     setState(() {
       selectedPeriod = period;
-      // 기간에 따라 필터링하는 로직 추가
     });
+    applyFilters();
   }
 
   void searchOrders(String query) {
     setState(() {
       searchQuery = query;
-      // 검색어에 따라 필터링하는 로직 추가
+    });
+    applyFilters();
+  }
+
+  void applyFilters() {
+    DateTime now = DateTime.now();
+    DateTime? startDate;
+
+    switch (selectedPeriod) {
+      case '1주일':
+        startDate = now.subtract(Duration(days: 7));
+        break;
+      case '1개월':
+        startDate = DateTime(now.year, now.month - 1, now.day);
+        break;
+      case '3개월':
+        startDate = DateTime(now.year, now.month - 3, now.day);
+        break;
+      default:
+        startDate = null;
+        break;
+    }
+
+    setState(() {
+      filteredOrderList = orderList.where((order) {
+        final orderDate = DateTime.parse(order['orderGetDTO']['order_date']);
+        bool matchesDate = startDate == null || orderDate.isAfter(startDate);
+        bool matchesSearch = searchQuery.isEmpty ||
+            order['orderItemsGetDTOs'][0]['product']['name']
+                .contains(searchQuery);
+        return matchesDate && matchesSearch;
+      }).toList();
     });
   }
 
@@ -101,36 +126,46 @@ class _OrderListScreenState extends State<OrderListScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: Text('주문 내역'),
+        title: Text('주문 내역', style: TextStyle(color: Colors.black)),
         centerTitle: true,
+        elevation: 1.0,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                FilterButton('1주일', filterByDate),
-                FilterButton('1개월', filterByDate),
-                FilterButton('3개월', filterByDate),
-                FilterButton('기간설정', filterByDate),
-              ],
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  FilterButton('1주일', filterByDate, selectedPeriod == '1주일'),
+                  FilterButton('1개월', filterByDate, selectedPeriod == '1개월'),
+                  FilterButton('3개월', filterByDate, selectedPeriod == '3개월'),
+                ],
+              ),
             ),
             SizedBox(height: 10),
             TextField(
               decoration: InputDecoration(
                 labelText: '검색',
-                border: OutlineInputBorder(),
+                labelStyle: TextStyle(color: Colors.grey[700]),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[700]),
+                filled: true,
+                fillColor: Colors.grey[100],
               ),
               onChanged: searchOrders,
             ),
             SizedBox(height: 20),
             Expanded(
               child: ListView.builder(
-                itemCount: orderList.length,
+                itemCount: filteredOrderList.length,
                 itemBuilder: (context, index) {
-                  final order = orderList[index];
+                  final order = filteredOrderList[index];
                   return OrderTile(order);
                 },
               ),
@@ -141,18 +176,60 @@ class _OrderListScreenState extends State<OrderListScreen> {
     );
   }
 
-  Widget FilterButton(String label, Function(String) onTap) {
-    return OutlinedButton(
-      onPressed: () => onTap(label),
-      child: Text(label),
+  Widget FilterButton(String label, Function(String) onTap, bool isSelected) {
+    return Expanded(
+      child: OutlinedButton(
+        onPressed: () => onTap(label),
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.symmetric(vertical: 10.0),
+          side: BorderSide(
+            color: isSelected ? Colors.blue : Colors.grey,
+            width: 1.5,
+          ),
+          backgroundColor: isSelected ? Colors.blue[50] : Colors.white,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.blue : Colors.black,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 
   Widget OrderTile(dynamic order) {
+    final orderDTO = order['orderGetDTO'];
+    final orderItems = order['orderItemsGetDTOs'];
+
+    if (orderItems == null || orderItems.isEmpty) {
+      return ListTile(
+        title: Text('주문 항목이 없습니다'),
+      );
+    }
+
+    final firstItem = orderItems[0];
+    final product = firstItem['product'];
+
+    final orderDate = DateTime.parse(orderDTO['order_date']);
+    final formattedDate = DateFormat('yyyy-MM-dd').format(orderDate);
+
     return ListTile(
-      leading: Image.network(order['image']),
-      title: Text(order['name']),
-      subtitle: Text('${order['price']}원\n${order['date']}'),
+      leading: product != null
+          ? Image.network(
+        'http://34.64.110.210:8080/' + product['image'],
+        width: 50,
+        height: 50,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.image_not_supported);
+        },
+      )
+          : Icon(Icons.image_not_supported),
+      title: Text(product != null ? product['name'] : '제품 이름 없음'),
+      subtitle: Text(
+        '가격: ${firstItem['product_price']}원\n주문 날짜: $formattedDate',
+      ),
       isThreeLine: true,
     );
   }
