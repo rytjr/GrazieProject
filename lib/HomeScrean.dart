@@ -29,34 +29,56 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    fetchStores(); // API를 통해 매장 데이터를 불러옴
+    print("initState 실행");
+    Future.delayed(Duration.zero, () {
+      fetchStores();
+    });
   }
 
-  // 매장 데이터를 API로부터 가져오는 함수
-  void fetchStores() async {
+  Future<void> fetchStores() async {
     try {
-      var dio = Dio();
-      var response = await dio.get('http://34.64.110.210:8080/api/store/get/all');
-      setState(() {
-        stores = response.data; // 받아온 매장 데이터를 리스트에 저장
-        isLoading = false;
-      });
-      print(stores);
+      final url = 'http://34.64.110.210:8080/api/store/get/all';
+      print("URL 요청 시작");
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+      final responseBody = utf8.decode(response.bodyBytes); // UTF-8로 디코딩
+      print("응답 코드: ${responseBody}");
+
+      if (response.statusCode == 200) {
+        print("매장 응답 : ${response.body}");
+        final responseData = json.decode(responseBody); // 디코딩 후 JSON 파싱;
+        print("응답 코드: ${responseData}");
+        setState(() {
+          stores = responseData;
+          isLoading = false;
+        });
+      } else {
+        print('Order submission failed: ${response.body}');
+        setState(() {
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      print(e);
+      print('Error during order submission: $e');
       setState(() {
         isLoading = false;
       });
     }
   }
 
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
 
+    // 특정 인덱스에서 추가 작업을 수행하려면 조건 추가 가능
     if (index == 1) {
-      _showOrderModal(context);
+      _showOrderModal(context); // 예시: Order Modal을 표시
     }
   }
 
@@ -108,12 +130,42 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void showStoreDetailsModal(BuildContext context, String title, String address, String operatingHours, String additionalInfo, dynamic store) {
+  void showStoreDetailsModal(BuildContext context, String title, String address, Map<String, dynamic> operatingHours, String roadWay, bool parking, dynamic store) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
         final double screenHeight = MediaQuery.of(context).size.height;
+
+        // 운영 시간 표시 생성 함수
+        // 운영 시간 표시 생성 함수
+        String formatOperatingHours(Map<String, dynamic> hoursData) {
+          List<String> formattedHours = [];
+
+          hoursData.forEach((day, times) {
+            if (times != null && times is Map) {
+              final openTimeStr = times['open'] ?? "00:00:00";
+              final closeTimeStr = times['close'] ?? "00:00:00";
+
+              // 문자열 시간 데이터를 DateTime 형식으로 파싱하여 시간과 분 추출
+              final openTime = DateTime.parse("1970-01-01 $openTimeStr");
+              final closeTime = DateTime.parse("1970-01-01 $closeTimeStr");
+
+              String formattedDay = "$day: ${openTime.hour.toString().padLeft(2, '0')}:${openTime.minute.toString().padLeft(2, '0')} - ${closeTime.hour.toString().padLeft(2, '0')}:${closeTime.minute.toString().padLeft(2, '0')}";
+              formattedHours.add(formattedDay);
+            } else {
+              formattedHours.add("$day: 정보 없음");
+            }
+          });
+
+          return formattedHours.join("\n");
+        }
+
+
+        // 운영 시간 및 휴일 텍스트 생성
+        String operatingHoursText = formatOperatingHours(operatingHours['days'] ?? {});
+        String holidaysText = formatOperatingHours(operatingHours['holidays'] ?? {});
+
         return Container(
           height: screenHeight - 60,
           color: Colors.white,
@@ -142,10 +194,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(address, style: TextStyle(fontSize: 18, color: Colors.grey[800])),
                     SizedBox(height: 10),
                     Text("운영 시간", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(operatingHours, style: TextStyle(fontSize: 16)),
+                    Text(operatingHoursText, style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 10),
+                    Text("휴일", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(holidaysText, style: TextStyle(fontSize: 16, color: Colors.red)),
                     SizedBox(height: 20),
                     Text("추가 정보", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text(additionalInfo, style: TextStyle(fontSize: 16)),
+                    Text("도로명 주소: $roadWay\n주차 가능 여부: ${parking ? '가능' : '불가'}", style: TextStyle(fontSize: 16)),
                   ],
                 ),
               ),
@@ -217,17 +272,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  Widget _buildStoreTile(String? title, String? subtitle,  dynamic store) {
+  Widget _buildStoreTile(String? title, String? subtitle, dynamic store) {
     return GestureDetector(
       onTap: () {
         showStoreDetailsModal(
-            context,
-            title ?? '매장 이름 없음', // null일 때 기본값 제공
-            subtitle ?? '매장 주소 없음', // null일 때 기본값 제공
-            // imagePath ?? 'https://example.com/default-image.jpg', // null일 때 기본 이미지 경로 제공
-            "운영 시간: 07:00 - 21:30", // 운영 시간은 임시로 설정
-            "주말 15시 - 18시, DT로 전환 시간대 조정 가능합니다.", // 추가 정보 임시 설정
-            store // 매장 정보를 전달
+          context,
+          title ?? '매장 이름 없음',
+          subtitle ?? '매장 주소 없음',
+          store['operatingHours'] ?? {}, // 운영 시간
+          store['road_way'] ?? '주소 없음', // 도로명 주소
+          store['parking'] ?? false, // 주차 가능 여부
+          store, // 네 번째 인자로 store 전달
         );
       },
       child: Padding(
@@ -443,8 +498,8 @@ class _HomeContentState extends State<HomeContent> {
                         children: [
                           ClipOval(
                             child: SizedBox(
-                              width: 60,
-                              height: 60,
+                              width: 85,
+                              height: 70,
                               child: Image.network(
                                 'http://34.64.110.210:8080/' + products[index]['image'],
                                 fit: BoxFit.cover,
@@ -643,7 +698,6 @@ class _HomeContentState extends State<HomeContent> {
   }
 }
 
-
 class OrderContent extends StatefulWidget {
   final int storeId; // 매장 ID
   final String orderMode; // 매장이용 또는 To-Go 정보
@@ -717,8 +771,8 @@ class _OrderContentState extends State<OrderContent> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ProductDetailScreen(
-                    product: products[index],  // 제품 정보 전달
-                    storeId: widget.storeId.toString(),  // storeId 전달
+                    product: products[index], // 제품 정보 전달
+                    storeId: widget.storeId.toString(), // storeId 전달
                     orderOption: widget.orderMode, // orderOption 전달 (매장 이용 또는 To-Go)
                     tk: tokentest,
                   ),
@@ -728,9 +782,29 @@ class _OrderContentState extends State<OrderContent> {
           );
         },
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 30, right: 30),
+        child: FloatingActionButton(
+          backgroundColor: Colors.black,
+          onPressed: () {
+            // Define the action when the FAB is pressed, e.g., navigate to the cart screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ShoppingCartScreen(
+                  orderoption: widget.orderMode,
+                  storeId: widget.storeId.toString(),
+                ),
+              ),
+            );
+          },
+          child: Icon(Icons.shopping_cart, color: Colors.white), // Cart icon with white color
+        ),
+      ),
     );
   }
 }
+
 
 
 class OtherContent extends StatefulWidget {
@@ -837,7 +911,7 @@ class _OtherContentState extends State<OtherContent> {
                 _buildOptionButton(
                     context, Icons.card_giftcard, "쿠폰", CouponScreen()),
                 _buildOptionButton(
-                    context, Icons.shopping_cart, "장바구니", ShoppingCartScreen(orderoption : '매장 이용')), // 장바구니 버튼 추가
+                    context, Icons.shopping_cart, "장바구니", ShoppingCartScreen(orderoption : '매장 이용',storeId: '2',)), // 장바구니 버튼 추가
               ],
             ),
             SizedBox(height: 20),

@@ -94,7 +94,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
               ),
               // 주문하기 버튼
-              SizedBox(height: 150),
+              SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 120, 22, 5),
                 child: Column(

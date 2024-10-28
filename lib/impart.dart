@@ -6,13 +6,13 @@ import 'package:iamport_flutter/iamport_payment.dart';
 import 'package:iamport_flutter/model/payment_data.dart';
 
 class impart extends StatelessWidget {
-  final int finalprice;
+  final int finalPrice;
   final String name;
   final String phone;
   final String email;
 
   impart({
-    required this.finalprice,
+    required this.finalPrice,
     required this.name,
     required this.phone,
     required this.email,
@@ -30,7 +30,7 @@ class impart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/images/iamport-logo.png'),
+              Image.asset('android/assets/images/iamport-logo.png'),
               Padding(padding: EdgeInsets.symmetric(vertical: 15)),
               Text('잠시만 기다려주세요...', style: TextStyle(fontSize: 20)),
             ],
@@ -45,7 +45,7 @@ class impart extends StatelessWidget {
           payMethod: 'card',                                           // 결제수단
           merchantUid: 'mid_${DateTime.now().millisecondsSinceEpoch}', // 주문번호
           name: '아임포트 결제데이터 분석',
-          amount: finalprice,
+          amount: finalPrice,
           currency: 'KRW',// 결제금액
           language: "KO",
           buyerName: name,                                           // 구매자 이름

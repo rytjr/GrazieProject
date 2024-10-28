@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/PaymentScreen.dart';
+import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class ShoppingCartScreen extends StatefulWidget {
   final String orderoption;
+  final String storeId;
 
-  ShoppingCartScreen({
-    required this.orderoption,
-  });
+  ShoppingCartScreen({required this.orderoption, required this.storeId});
+
   @override
   _CartScreenState createState() => _CartScreenState();
 }
 
 class _CartScreenState extends State<ShoppingCartScreen> {
   List<dynamic> cartItems = [];
-  List<bool> isSelectedList = [];
   bool isLoading = true;
 
   @override
@@ -37,10 +36,10 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     );
 
     final decodedResponseBody = utf8.decode(response.bodyBytes);
+    print("쇼핑 : $decodedResponseBody");
     if (response.statusCode == 200) {
       setState(() {
         cartItems = jsonDecode(decodedResponseBody);
-        isSelectedList = List<bool>.filled(cartItems.length, false);
         isLoading = false;
       });
     } else {
@@ -58,7 +57,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
 
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
-    print("증가토큰 : $token");
     final response = await http.patch(
       Uri.parse('http://34.64.110.210:8080/cart/increaseQuantity'),
       headers: {
@@ -66,14 +64,18 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         'Authorization': 'Bearer $token'
       },
       body: jsonEncode({
-        'cartItemId': cartItems[index]['cartItemId'].toString(),
+        'cartItemId': cartItems[index]['productId'].toString(),
       }),
     );
-    print("이유 : ${response.body}");
+    print("바디 : ${cartItems[index]['productId'].toString()}");
+    // 서버 응답 확인
+    print("증가 요청 상태 코드: ${response.statusCode}");
+    print("증가 요청 응답 본문: ${response.body}");
+
     if (response.statusCode == 200) {
-      print('Quantity increased successfully');
+      print('수량 증가 성공');
     } else {
-      print('Failed to increase quantity: ${response.statusCode}');
+      print('수량 증가 실패');
     }
   }
 
@@ -85,7 +87,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
 
       SecureStorageService storageService = SecureStorageService();
       String? token = await storageService.getToken();
-
       final response = await http.patch(
         Uri.parse('http://34.64.110.210:8080/cart/decreaseQuantity'),
         headers: {
@@ -93,36 +94,65 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           'Authorization': 'Bearer $token'
         },
         body: jsonEncode({
-          'cartItemId': cartItems[index]['cartItemId'].toString(),
+          'cartItemId': cartItems[index]['productId'].toString(),
         }),
       );
-      print("이유 ${response.body}");
+
+      // 서버 응답 확인
+      print("감소 요청 상태 코드: ${response.statusCode}");
+      print("감소 요청 응답 본문: ${response.body}");
+
       if (response.statusCode == 200) {
-        print('Quantity decreased successfully');
+        print('수량 감소 성공');
       } else {
-        print('Failed to decrease quantity: ${response.statusCode}');
+        print('수량 감소 실패');
       }
     }
   }
 
-  int calculateTotalSelectedPrice() {
-    int total = 0;
-    for (int i = 0; i < cartItems.length; i++) {
-      if (isSelectedList[i]) {
-        total += (cartItems[i]['price'] as int) * (cartItems[i]['quantity'] as int);
-      }
+  Future<void> deleteItem(int index) async {
+    final cartItemId = cartItems[index]['productId'];
+
+    if (cartItemId == null) {
+      print('삭제 실패: cartItemId가 null입니다.');
+      return;
     }
-    return total;
+
+    setState(() {
+      cartItems.removeAt(index);
+    });
+
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+
+    final response = await http.delete(
+      Uri.parse('http://34.64.110.210:8080/cart/delete'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+      body: jsonEncode({
+        'cartItemId': cartItemId.toString(),
+      }),
+    );
+
+    // 서버 응답 확인
+    print('삭제 요청 상태 코드: ${response.statusCode}');
+    print('삭제 요청 응답 본문: ${response.body}');
+
+    if (response.statusCode == 200) {
+      print('삭제 성공');
+    } else {
+      print('삭제 실패');
+    }
   }
 
-  int calculateTotalSelectedItems() {
-    int total = 0;
-    for (int i = 0; i < isSelectedList.length; i++) {
-      if (isSelectedList[i]) {
-        total++;
-      }
-    }
-    return total;
+  int calculateTotalPrice() {
+    return cartItems.fold<int>(0, (int sum, item) {
+      int price = (item['price'] ?? 0) as int;
+      int quantity = (item['quantity'] ?? 1) as int;
+      return sum + price * quantity;
+    });
   }
 
   @override
@@ -147,8 +177,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
             ),
             SizedBox(height: 10),
             Divider(thickness: 2, color: Colors.grey[300]),
-            _buildHeaderRow(),
-            Divider(thickness: 1, color: Colors.grey[300]),
             Expanded(
               child: ListView.separated(
                 itemCount: cartItems.length,
@@ -168,31 +196,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     );
   }
 
-  Widget _buildHeaderRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Checkbox(
-              value: isSelectedList.every((isSelected) => isSelected),
-              onChanged: (bool? value) {
-                setState(() {
-                  isSelectedList = List<bool>.filled(cartItems.length, value ?? false);
-                });
-              },
-            ),
-            Text('전체 선택'),
-          ],
-        ),
-        TextButton(
-          onPressed: deleteSelectedItems,
-          child: Text('선택 삭제', style: TextStyle(color: Colors.black)),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCartItem(Map<String, dynamic> item, int index) {
     final personalOptions = item['personalOptions'] ?? {};
     final temperature = item['temperature'] == 'ice' ? 'Ice' : 'Hot';
@@ -201,15 +204,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Checkbox(
-          value: isSelectedList[index],
-          onChanged: (bool? value) {
-            setState(() {
-              isSelectedList[index] = value ?? false;
-            });
-          },
-        ),
-        SizedBox(width: 10),
         Image.network(
           item['image'] != null ? 'http://34.64.110.210:8080/' + item['image'] : 'https://via.placeholder.com/50',
           width: 50,
@@ -233,16 +227,12 @@ class _CartScreenState extends State<ShoppingCartScreen> {
               Row(
                 children: [
                   IconButton(
-                    onPressed: () {
-                      decreaseQuantity(index);
-                    },
+                    onPressed: () => decreaseQuantity(index),
                     icon: Icon(Icons.remove_circle_outline, size: 20),
                   ),
                   Text('${item['quantity'] ?? 1}', style: TextStyle(fontSize: 16)),
                   IconButton(
-                    onPressed: () {
-                      increaseQuantity(index);
-                    },
+                    onPressed: () => increaseQuantity(index),
                     icon: Icon(Icons.add_circle_outline, size: 20),
                   ),
                 ],
@@ -253,8 +243,15 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text('${item['price'] ?? 0}원', style: TextStyle(fontSize: 14, color: Colors.grey)),
-            Text('${(item['price'] ?? 0) * (item['quantity'] ?? 1)}원', style: TextStyle(fontSize: 16, color: Colors.black)),
+            Text('${(item['price'] ?? 0)}원', style: TextStyle(fontSize: 16, color: Colors.black)),
+            SizedBox(height: 10),
+            GestureDetector(
+              onTap: () => deleteItem(index),
+              child: Text(
+                '삭제하기',
+                style: TextStyle(fontSize: 14, color: Color(0xFF5B1333)),
+              ),
+            ),
           ],
         ),
       ],
@@ -265,8 +262,8 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        Text('총 ${calculateTotalSelectedItems()}개  ', style: TextStyle(fontSize: 16)),
-        Text('${calculateTotalSelectedPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text('총 ${cartItems.length}개  ', style: TextStyle(fontSize: 16)),
+        Text('${calculateTotalPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       ],
     );
   }
@@ -277,38 +274,33 @@ class _CartScreenState extends State<ShoppingCartScreen> {
       height: 50,
       child: ElevatedButton(
         onPressed: () {
+          // 결제 화면으로 이동
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PaymentScreen(
-                product: {'product_id': 1, 'name': '커피', 'price': 5000, 'image': 'image_url'},  // 예시 데이터
-                storeId: '1',
-                orderOption: widget.orderoption,
-                quantity: 1,
-                selectedCup: 'Solo',
-                tk: '1',
-                keypoint: 1,
-                orderprice: 0,
-              ),
-            ),
+                builder: (context) => PaymentScreen(
+                  product: [],
+                  storeId: widget.storeId,
+                  orderOption: widget.orderoption,
+                  quantity: 1,
+                  selectedCup: 'NOT USE',
+                  specialRequest: '',
+                  tk: '',
+                  keypoint: 1,
+                  orderprice: 0,
+                  onename: '',
+                )),
           );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Color(0xFF5B1333),
         ),
-        child: Text('${calculateTotalSelectedPrice()}원 주문하기', style: TextStyle(fontSize: 18,color: Colors.white)),
+        child: Text('${calculateTotalPrice()}원 주문하기', style: TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
-  }
-
-  void deleteSelectedItems() {
-    setState(() {
-      cartItems.removeWhere((item) => isSelectedList[cartItems.indexOf(item)]);
-      isSelectedList.removeWhere((isSelected) => isSelected);
-    });
   }
 }
 
 void main() => runApp(MaterialApp(
-  home: ShoppingCartScreen(orderoption: '매장 이용',),
+  home: ShoppingCartScreen(orderoption: '매장 이용',storeId: '2',),
 ));

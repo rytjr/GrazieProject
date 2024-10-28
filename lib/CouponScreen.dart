@@ -46,9 +46,8 @@ class _CouponScreenState extends State<CouponScreen> {
   }
 
   // 쿠폰 발급 모달창 띄우기
-  void _showCouponModal(String couponName, String couponId) {
+  void _showCouponModal(String couponName, String couponId, String couponType) {
     showDialog(
-
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -59,7 +58,7 @@ class _CouponScreenState extends State<CouponScreen> {
             TextButton(
               child: Text('취소'),
               onPressed: () {
-                Navigator.of(context).pop(); // 모달창 닫기
+                Navigator.of(context).pop();
               },
             ),
             TextButton(
@@ -75,25 +74,30 @@ class _CouponScreenState extends State<CouponScreen> {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer $token'
                   },
-                  body: jsonEncode({'couponId': couponId}),
+                  body: jsonEncode({
+                    'couponId': couponId,
+                    'couponType': couponType
+                  }),
                 );
 
+                print("쿠폰 발급 요청 상태 코드: ${response.statusCode}");
+                print("쿠폰 발급 요청 응답 본문: ${response.body}");
+
                 if (response.statusCode == 200) {
-                  // 발급 성공 시 처리
                   setState(() {
-                    selectedCouponId = couponId; // 선택된 쿠폰 ID 저장
+                    selectedCouponId = couponId;
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$couponName 쿠폰이 발급되었습니다.')),
                   );
+                  fetchCoupons();
                 } else {
-                  // 발급 실패 시 처리
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('쿠폰 발급에 실패했습니다.')),
                   );
                 }
 
-                Navigator.of(context).pop(); // 모달창 닫기
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -101,7 +105,6 @@ class _CouponScreenState extends State<CouponScreen> {
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -116,16 +119,16 @@ class _CouponScreenState extends State<CouponScreen> {
             children: [
               Expanded(
                 child: TabBarItem(
-                  label: '사용 가능한 쿠폰',
+                  label: '발급 가능한 쿠폰',
                   isSelected: true, // 기본으로 선택
                 ),
               ),
-              Expanded(
-                child: TabBarItem(
-                  label: '사용한 쿠폰',
-                  isSelected: false,
-                ),
-              ),
+              // Expanded(
+              //   child: TabBarItem(
+              //     label: '사용한 쿠폰',
+              //     isSelected: false,
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -135,11 +138,13 @@ class _CouponScreenState extends State<CouponScreen> {
           : ListView.builder(
         itemCount: coupons.length,
         itemBuilder: (context, index) {
+          final coupon = coupons[index];
+          final couponType = coupon.containsKey('discountRate') ? "DISCOUNT" : "PRODUCT";
           return CouponCard(
             coupon: coupons[index],
             isSelected: selectedCouponId == coupons[index]['id'].toString(),
             onSelected: (String couponId, String couponName) {
-              _showCouponModal(couponName, couponId); // 쿠폰 클릭 시 모달창 띄우기
+              _showCouponModal(couponName, couponId, couponType);
             },
           );
         },
@@ -147,12 +152,11 @@ class _CouponScreenState extends State<CouponScreen> {
     );
   }
 }
-
 // 쿠폰 카드 UI
 class CouponCard extends StatelessWidget {
   final dynamic coupon;
   final bool isSelected;
-  final Function(String, String) onSelected; // 쿠폰 ID와 이름 전달
+  final Function(String, String) onSelected;
 
   const CouponCard({
     required this.coupon,
@@ -164,23 +168,22 @@ class CouponCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        // 쿠폰 선택 시 ID와 이름을 전달하여 모달창에서 확인
         onSelected(coupon['id'].toString(), coupon['couponName']);
       },
       child: Card(
         margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: BorderSide(color: isSelected ? Colors.blue : Colors.grey.shade300), // 선택된 쿠폰 강조
+          side: BorderSide(color: isSelected ? Colors.blue : Colors.grey.shade300),
         ),
-        color: isSelected ? Colors.blue.shade50 : Colors.white, // 선택되면 배경색 변경
+        color: isSelected ? Colors.blue.shade50 : Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '${coupon['couponName']} 쿠폰', // 서버의 couponName 사용
+                '${coupon['couponName']} 쿠폰',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
@@ -190,7 +193,7 @@ class CouponCard extends StatelessWidget {
               ),
               SizedBox(height: 8),
               Text(
-                '기간 ${coupon['expirationDate']}', // 서버의 expirationDate 사용
+                '기간 ${coupon['expirationDate']}',
                 style: TextStyle(fontSize: 14, color: Colors.black),
               ),
               SizedBox(height: 16),
@@ -201,6 +204,7 @@ class CouponCard extends StatelessWidget {
     );
   }
 }
+
 
 // 탭바 아이템 구성
 class TabBarItem extends StatelessWidget {

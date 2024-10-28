@@ -184,7 +184,7 @@ class _UserInScreenState extends State<UserInScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 160),
+                SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

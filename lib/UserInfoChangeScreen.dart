@@ -23,7 +23,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/api/user-info'),
+      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

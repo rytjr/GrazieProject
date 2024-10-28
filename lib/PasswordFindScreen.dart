@@ -127,9 +127,12 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
+      body: jsonEncode({"userId" : id,"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
     );
-    print("비밀번호 찾기 : ${response.body},$email");
+    print("비밀번호 찾기 응답 상태: ${response.statusCode}");
+    print("비밀번호 찾기 응답 본문: ${response.body}");
+    print("전달된 아이디: $id");
+    print("전달된 이메일: $email");
     if (response.statusCode == 200) {
       Navigator.push(
         context,

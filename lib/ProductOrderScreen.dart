@@ -140,13 +140,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     return additionalPrice;
   }
 
-  // 총 가격 계산 (기본 가격 + 추가 가격 + ICE 옵션에 따른 추가 금액)
+// 총 가격 계산 (기본 가격 + 추가 가격 + ICE 옵션에 따른 추가 금액, 수량 반영)
   int _getTotalPrice() {
-    int totalPrice = (_getBasePrice() + _calculateAdditionalPrice()) * quantity;
+    int basePrice = _getBasePrice() + _calculateAdditionalPrice(); // 기본 가격에 추가 가격을 더함
+    int totalPrice = basePrice * quantity; // 수량을 곱하여 총 가격 계산
 
     // ICE 선택 시 300원 추가
     if (widget.selectedTemperature == 'ICE') {
-      totalPrice += 300;
+      totalPrice += 300 * quantity; // 수량만큼 ICE 추가 비용을 곱함
     }
 
     return totalPrice;
@@ -237,7 +238,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 },
               ),
               SizedBox(height: 110),
-              SizedBox(height: 170),
+              SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -316,6 +317,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                               tk: widget.tk,
                               keypoint: keypoint,
                               orderprice: _getTotalPrice(),
+                              onename : widget.product['name'],
                             ),
                           ),
                         );
@@ -604,7 +606,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => ShoppingCartScreen(orderoption : widget.orderOption)),
+                            builder: (context) => ShoppingCartScreen(orderoption : widget.orderOption,storeId: widget.storeId,)),
                       );
                     },
                     style: OutlinedButton.styleFrom(
