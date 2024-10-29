@@ -11,41 +11,66 @@ class CouponScreen extends StatefulWidget {
 class _CouponScreenState extends State<CouponScreen> {
   List<dynamic> coupons = [];
   bool isLoading = true;
-  String? selectedCouponId; // 선택된 쿠폰 ID 저장
+  bool isShowingAvailableCoupons = true; // 발급 가능한 쿠폰 표시 여부
+  String? selectedCouponId;
 
   @override
   void initState() {
     super.initState();
-    fetchCoupons(); // 쿠폰 데이터를 서버에서 받아오는 함수 호출
+    fetchAvailableCoupons(); // 초기 로드 시 발급 가능한 쿠폰 로드
   }
 
-  // 서버에서 쿠폰 데이터를 받아오는 함수
-  void fetchCoupons() async {
+  // 발급 가능한 쿠폰 목록을 서버에서 가져오는 함수
+  void fetchAvailableCoupons() async {
+    setState(() => isLoading = true);
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
-    // 서버의 URL을 정확하게 입력합니다.
-    final response = await http.get(Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
+
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/api/coupons/list'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token'
+        'Authorization': 'Bearer $token',
       },
     );
-    final decodedResponseBody = utf8.decode(response.bodyBytes);
-    print('쿠폰 $decodedResponseBody');
+
     if (response.statusCode == 200) {
       setState(() {
-        coupons = jsonDecode(decodedResponseBody);
+        coupons = jsonDecode(utf8.decode(response.bodyBytes));
         isLoading = false;
       });
     } else {
-      setState(() {
-        isLoading = false;
-      });
-      throw Exception('Failed to load coupons');
+      setState(() => isLoading = false);
+      throw Exception('Failed to load available coupons');
     }
   }
 
-  // 쿠폰 발급 모달창 띄우기
+  // 발급받은 쿠폰 목록을 서버에서 가져오는 함수
+  Future<void> fetchCouponsData() async {
+    setState(() => isLoading = true);
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/api/coupons/issued-list'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        coupons = jsonDecode(utf8.decode(response.bodyBytes));
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+      throw Exception('Failed to load issued coupons');
+    }
+  }
+
+  // 쿠폰 발급 모달창
   void _showCouponModal(String couponName, String couponId, String couponType) {
     showDialog(
       context: context,
@@ -57,14 +82,11 @@ class _CouponScreenState extends State<CouponScreen> {
           actions: [
             TextButton(
               child: Text('취소'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
             ),
             TextButton(
               child: Text('확인'),
               onPressed: () async {
-                // 쿠폰 발급 통신 요청
                 SecureStorageService storageService = SecureStorageService();
                 String? token = await storageService.getToken();
 
@@ -72,16 +94,13 @@ class _CouponScreenState extends State<CouponScreen> {
                   Uri.parse('http://34.64.110.210:8080/api/coupons/issue'),
                   headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': 'Bearer $token'
+                    'Authorization': 'Bearer $token',
                   },
                   body: jsonEncode({
                     'couponId': couponId,
-                    'couponType': couponType
+                    'couponType': couponType,
                   }),
                 );
-
-                print("쿠폰 발급 요청 상태 코드: ${response.statusCode}");
-                print("쿠폰 발급 요청 응답 본문: ${response.body}");
 
                 if (response.statusCode == 200) {
                   setState(() {
@@ -90,13 +109,12 @@ class _CouponScreenState extends State<CouponScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('$couponName 쿠폰이 발급되었습니다.')),
                   );
-                  fetchCoupons();
+                  fetchAvailableCoupons(); // 발급 성공 시 쿠폰 목록 다시 불러오기
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('쿠폰 발급에 실패했습니다.')),
                   );
                 }
-
                 Navigator.of(context).pop();
               },
             ),
@@ -105,6 +123,7 @@ class _CouponScreenState extends State<CouponScreen> {
       },
     );
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,31 +137,47 @@ class _CouponScreenState extends State<CouponScreen> {
           child: Row(
             children: [
               Expanded(
-                child: TabBarItem(
-                  label: '발급 가능한 쿠폰',
-                  isSelected: true, // 기본으로 선택
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isShowingAvailableCoupons = true;
+                    });
+                    fetchAvailableCoupons();
+                  },
+                  child: TabBarItem(
+                    label: '발급 가능한 쿠폰',
+                    isSelected: isShowingAvailableCoupons,
+                  ),
                 ),
               ),
-              // Expanded(
-              //   child: TabBarItem(
-              //     label: '사용한 쿠폰',
-              //     isSelected: false,
-              //   ),
-              // ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      isShowingAvailableCoupons = false;
+                    });
+                    fetchCouponsData();
+                  },
+                  child: TabBarItem(
+                    label: '사용 가능한 쿠폰',
+                    isSelected: !isShowingAvailableCoupons,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
       body: isLoading
-          ? Center(child: CircularProgressIndicator()) // 데이터 로딩 중
+          ? Center(child: CircularProgressIndicator())
           : ListView.builder(
         itemCount: coupons.length,
         itemBuilder: (context, index) {
           final coupon = coupons[index];
           final couponType = coupon.containsKey('discountRate') ? "DISCOUNT" : "PRODUCT";
           return CouponCard(
-            coupon: coupons[index],
-            isSelected: selectedCouponId == coupons[index]['id'].toString(),
+            coupon: coupon,
+            isSelected: selectedCouponId == coupon['id'].toString(),
             onSelected: (String couponId, String couponName) {
               _showCouponModal(couponName, couponId, couponType);
             },
@@ -152,6 +187,7 @@ class _CouponScreenState extends State<CouponScreen> {
     );
   }
 }
+
 // 쿠폰 카드 UI
 class CouponCard extends StatelessWidget {
   final dynamic coupon;
@@ -179,24 +215,37 @@ class CouponCard extends StatelessWidget {
         color: isSelected ? Colors.blue.shade50 : Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              Text(
-                '${coupon['couponName']} 쿠폰',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${coupon['couponName']} 쿠폰',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '${coupon['description']}',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    '기간 ${coupon['expirationDate']}',
+                    style: TextStyle(fontSize: 14, color: Colors.black),
+                  ),
+                ],
               ),
-              SizedBox(height: 8),
-              Text(
-                '${coupon['description']}',
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(Icons.download, color: Colors.blue),
+                  onPressed: () {
+                    onSelected(coupon['id'].toString(), coupon['couponName']);
+                  },
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                '기간 ${coupon['expirationDate']}',
-                style: TextStyle(fontSize: 14, color: Colors.black),
-              ),
-              SizedBox(height: 16),
             ],
           ),
         ),
@@ -204,7 +253,6 @@ class CouponCard extends StatelessWidget {
     );
   }
 }
-
 
 // 탭바 아이템 구성
 class TabBarItem extends StatelessWidget {

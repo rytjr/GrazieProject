@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:fluttertest/LoginScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class UserInScreen extends StatefulWidget {
   @override
@@ -17,6 +19,8 @@ class _UserInScreenState extends State<UserInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  XFile? _imageFile;
   bool _isButtonEnabled = false;
 
   // 회원가입 요청
@@ -38,17 +42,14 @@ class _UserInScreenState extends State<UserInScreen> {
           },
           body: jsonEncode(requestData),
         );
-
+        print("회가 : ${response.body}");
+        print(response.request);
         if (response.statusCode == 201) {
           final userId = int.tryParse(response.body);
           if (userId != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('회원가입이 완료되었습니다.')),
-            );
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LoginScreen()),
-            );
+            // 회원가입 성공 시 이미지 선택 후 추가 정보 요청
+            print('성공 $userId');
+            await _pickImage(userId);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('서버 응답 형식이 올바르지 않습니다.')),
@@ -67,10 +68,69 @@ class _UserInScreenState extends State<UserInScreen> {
     }
   }
 
+  // 이미지 선택
+  Future<void> _pickImage(int userId) async {
+    _imageFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (_imageFile != null) {
+      print("이미지 경로: ${_imageFile!.path}");
+      // 선택된 이미지 경로를 사용해 추가 정보 전송
+      await _sendAdditionalInfo(userId, _imageFile!.path);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('이미지가 선택되지 않았습니다.')),
+      );
+    }
+  }
+
+  // 추가 정보 요청
+  Future<void> _sendAdditionalInfo(int userId, String imagePath) async {
+    final uri = Uri.parse(
+        'http://34.64.110.210:8080/users/additional-info/$userId/additionalInfoJoin');
+    final request = http.MultipartRequest('POST', uri);
+
+    // 선택된 이미지 파일 추가
+    request.files.add(await http.MultipartFile.fromPath(
+      'profileImage',
+      imagePath,
+    ));
+
+    // additionalInfo 필드 추가
+    final additionalInfo = {
+      "nickname": "tyer",
+      "gender": "MALE"
+    };
+    request.fields['additionalInfo'] = jsonEncode(additionalInfo);
+
+    try {
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+
+      print("추가 정보 : $responseBody");
+      print('request : ${response.request}');
+
+      if (response.statusCode == 200) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('추가 정보 전송 실패. 응답: $responseBody')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('네트워크 오류가 발생했습니다.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -95,7 +155,9 @@ class _UserInScreenState extends State<UserInScreen> {
               children: [
                 Text(
                   '아이디와 비밀번호를\n입력해 주세요.',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold , color: Color(0xFF5B1333)),
+                  style: TextStyle(fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF5B1333)),
                 ),
                 SizedBox(height: 30),
                 TextFormField(
@@ -111,16 +173,16 @@ class _UserInScreenState extends State<UserInScreen> {
                 SizedBox(height: 10),
                 TextFormField(
                   controller: _phoneController,
-                  keyboardType: TextInputType.number, // 숫자 키보드 사용
+                  keyboardType: TextInputType.number,
                   inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly, // 숫자만 입력 가능
+                    FilteringTextInputFormatter.digitsOnly,
                   ],
                   decoration: InputDecoration(labelText: '전화번호'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return '전화번호를 입력해 주세요.';
                     } else if (value.length != 11) {
-                      return '전화번호는 11자리여야 합니다.';
+                      return '올바른 전화번호를 입력해 주세요.';
                     }
                     return null;
                   },
@@ -130,7 +192,8 @@ class _UserInScreenState extends State<UserInScreen> {
                   controller: _idController,
                   decoration: InputDecoration(labelText: '아이디 (4~13자리 이내)'),
                   validator: (value) {
-                    if (value == null || value.length < 4 || value.length > 13) {
+                    if (value == null || value.length < 4 ||
+                        value.length > 13) {
                       return '아이디는 4~13자리여야 합니다.';
                     }
                     return null;

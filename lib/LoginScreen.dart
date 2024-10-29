@@ -39,6 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: jsonEncode({'userid': id, 'password': password}), // 서버에서 기대하는 키 이름 확인
     );
 
+
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
@@ -57,8 +58,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } else {
-      // 로그인 실패 시 모달창 띄우기
-      _showErrorModal('로그인에 실패했습니다. 다시 시도해 주세요.');
+      // 로그인 실패 시 서버에서 제공한 메시지를 파싱하여 모달창에 표시
+      final Map<String, dynamic> errorResponse = jsonDecode(response.body);
+      String errorMessage = errorResponse['message'] ?? '로그인에 실패했습니다. 다시 시도해 주세요.';
+      _showErrorModal(errorMessage);
     }
   }
 
@@ -75,6 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('로그인 오류'),
           content: Text(message),
           actions: [

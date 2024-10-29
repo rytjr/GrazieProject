@@ -11,6 +11,8 @@ class UserInfoChangeScreen extends StatefulWidget {
 
 class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
   Map<String, dynamic> userProfile = {}; // 사용자 정보 저장
+  bool isGenderValid = true; // 성별 유효성 확인용 변수
+  final TextEditingController genderController = TextEditingController(); // 성별 입력 컨트롤러
 
   @override
   void initState() {
@@ -23,7 +25,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final response = await http.get(
-      Uri.parse('http://34.64.110.210:8080/users/readProfile'),
+      Uri.parse('http://34.64.110.210:8080/api/user-info'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -35,36 +37,53 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
     if (response.statusCode == 200) {
       setState(() {
         userProfile = jsonDecode(decodedResponseBody);
+        // 성별을 '남' 또는 '여'로 변환
+        userProfile['gender'] = userProfile['gender'] == "MALE" ? "남" : "여";
+        genderController.text = userProfile['gender'] ?? '';
       });
     } else {
       throw Exception('Failed to load profile');
     }
   }
 
+  // 성별 유효성 검사
+  bool validateGender() {
+    return genderController.text == "남" || genderController.text == "여";
+  }
+
   // 사용자 정보 수정 요청 보내기
   Future<void> updateUserProfile() async {
+    if (!validateGender()) {
+      setState(() {
+        isGenderValid = false; // 유효하지 않으면 오류 메시지 표시
+      });
+      return;
+    }
+
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     try {
-      final response = await http.patch(
-        Uri.parse('http://34.64.110.210:8080/api/user-info'), // PATCH 메서드 사용
+      final response = await http.put(
+        Uri.parse('http://34.64.110.210:8080/users/additional-info/update'), // PATCH 메서드 사용
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          "email": userProfile['email'],
-          "name": userProfile['name'],
-          "phone": userProfile['phone'],
+          "gender": genderController.text == "남" ? "MALE" : "FEMALE",
           "nickname": userProfile['nickname'],
-          "gender": userProfile['gender'],
         }),
       );
-
+      final responseBody = utf8.decode(response.bodyBytes); // UTF-8로 디코딩
+      print("응답 코드: ${responseBody}");
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('수정이 완료되었습니다.')),
         );
+        fetchUserProfile(); // 수정 후 새로고침
+        setState(() {
+          isGenderValid = true; // 수정이 완료되면 오류 메시지 제거
+        });
       } else {
         throw Exception('Failed to update profile');
       }
@@ -143,9 +162,12 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
                   controller: TextEditingController(text: userProfile['email']),
                 ),
                 TextField(
-                  onChanged: (value) => userProfile['gender'] = value,
-                  decoration: InputDecoration(labelText: '성별'),
-                  controller: TextEditingController(text: userProfile['gender']),
+                  controller: genderController,
+                  decoration: InputDecoration(
+                    labelText: '성별',
+                    hintText: '남 또는 여만 입력 가능합니다.',
+                    errorText: isGenderValid ? null : '성별은 남 또는 여만 가능합니다.',
+                  ),
                 ),
                 SizedBox(height: 310), // 버튼과 겹치지 않도록 추가 간격 확보
               ],
@@ -189,12 +211,7 @@ class _ProfileEditScreenState extends State<UserInfoChangeScreen> {
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  updateUserProfile().then((_) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => UserInfoChangeScreen()), // 대체하여 새로 로드
-                    );
-                  });
+                  updateUserProfile(); // 버튼 클릭 시 유효성 검사 후 업데이트 실행
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF5B1333),

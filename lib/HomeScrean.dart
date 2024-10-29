@@ -138,9 +138,19 @@ class _HomeScreenState extends State<HomeScreen> {
         final double screenHeight = MediaQuery.of(context).size.height;
 
         // 운영 시간 표시 생성 함수
-        // 운영 시간 표시 생성 함수
         String formatOperatingHours(Map<String, dynamic> hoursData) {
           List<String> formattedHours = [];
+
+          // 영어 요일을 한국어 요일로 변환하는 매핑
+          Map<String, String> dayMapping = {
+            "Monday": "월요일",
+            "Tuesday": "화요일",
+            "Wednesday": "수요일",
+            "Thursday": "목요일",
+            "Friday": "금요일",
+            "Saturday": "토요일",
+            "Sunday": "일요일"
+          };
 
           hoursData.forEach((day, times) {
             if (times != null && times is Map) {
@@ -151,18 +161,18 @@ class _HomeScreenState extends State<HomeScreen> {
               final openTime = DateTime.parse("1970-01-01 $openTimeStr");
               final closeTime = DateTime.parse("1970-01-01 $closeTimeStr");
 
-              String formattedDay = "$day: ${openTime.hour.toString().padLeft(2, '0')}:${openTime.minute.toString().padLeft(2, '0')} - ${closeTime.hour.toString().padLeft(2, '0')}:${closeTime.minute.toString().padLeft(2, '0')}";
+              // 영어 요일을 한국어 요일로 변환
+              String formattedDay = "${dayMapping[day] ?? day}: ${openTime.hour.toString().padLeft(2, '0')}:${openTime.minute.toString().padLeft(2, '0')} - ${closeTime.hour.toString().padLeft(2, '0')}:${closeTime.minute.toString().padLeft(2, '0')}";
               formattedHours.add(formattedDay);
             } else {
-              formattedHours.add("$day: 정보 없음");
+              formattedHours.add("${dayMapping[day] ?? day}: 정보 없음");
             }
           });
 
           return formattedHours.join("\n");
         }
 
-
-        // 운영 시간 및 휴일 텍스트 생성
+// 운영 시간 및 휴일 텍스트 생성
         String operatingHoursText = formatOperatingHours(operatingHours['days'] ?? {});
         String holidaysText = formatOperatingHours(operatingHours['holidays'] ?? {});
 
@@ -911,7 +921,7 @@ class _OtherContentState extends State<OtherContent> {
                 _buildOptionButton(
                     context, Icons.card_giftcard, "쿠폰", CouponScreen()),
                 _buildOptionButton(
-                    context, Icons.shopping_cart, "장바구니", ShoppingCartScreen(orderoption : '매장 이용',storeId: '2',)), // 장바구니 버튼 추가
+                    context, Icons.shopping_cart, "장바구니", ShoppingCartScreen(orderoption : '',storeId: '2',)), // 장바구니 버튼 추가
               ],
             ),
             SizedBox(height: 20),
