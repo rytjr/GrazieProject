@@ -179,8 +179,11 @@ class _CouponScreenState extends State<CouponScreen> {
             coupon: coupon,
             isSelected: selectedCouponId == coupon['id'].toString(),
             onSelected: (String couponId, String couponName) {
-              _showCouponModal(couponName, couponId, couponType);
+              if (isShowingAvailableCoupons) {
+                _showCouponModal(couponName, couponId, couponType);
+              }
             },
+            showDownloadIcon: isShowingAvailableCoupons, // 발급 가능한 쿠폰만 아이콘 표시
           );
         },
       ),
@@ -192,12 +195,14 @@ class _CouponScreenState extends State<CouponScreen> {
 class CouponCard extends StatelessWidget {
   final dynamic coupon;
   final bool isSelected;
+  final bool showDownloadIcon; // 다운로드 아이콘 표시 여부
   final Function(String, String) onSelected;
 
   const CouponCard({
     required this.coupon,
     required this.isSelected,
     required this.onSelected,
+    required this.showDownloadIcon,
   });
 
   @override
@@ -236,16 +241,17 @@ class CouponCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: IconButton(
-                  icon: Icon(Icons.download, color: Colors.blue),
-                  onPressed: () {
-                    onSelected(coupon['id'].toString(), coupon['couponName']);
-                  },
+              if (showDownloadIcon) // 발급 가능한 쿠폰일 때만 아이콘 표시
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: IconButton(
+                    icon: Icon(Icons.download, color: Colors.blue),
+                    onPressed: () {
+                      onSelected(coupon['id'].toString(), coupon['couponName']);
+                    },
+                  ),
                 ),
-              ),
             ],
           ),
         ),

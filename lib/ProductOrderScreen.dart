@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fluttertest/SecureStorageService.dart';
 import 'package:http/http.dart' as http;
 import 'package:fluttertest/PaymentScreen.dart';
-import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'package:fluttertest/HomeScrean.dart';
+import 'package:fluttertest/ShoppingCartScreen.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart'; // 토큰 저장/가져오기 위한 패키지
 import 'package:intl/intl.dart'; // 날짜 형식을 맞추기 위해 추가
@@ -30,16 +30,14 @@ class ProductOrderScreen extends StatefulWidget {
 class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int quantity = 1;
   String selectedSize = "Small"; // 기본 선택된 사이즈 옵션
-  int storeId = 1;
-  int userId = 2;
-  int? couponId;
-  int orderprice = 0;
+  List<dynamic> cartItems = []; // 장바구니 항목 저장 변수
+  bool isLoading = true;
+
   final _storage = FlutterSecureStorage(); // SecureStorage 초기화
 
   // 퍼스널 옵션 기본값 설정
   String selectedIce = "NORMAL"; // 얼음 옵션
   String selectedTumbler = "NOT_USE"; // 텀블러 사용 여부
-
   int shotAddition = 0; // 샷 추가 기본값
   int pearlAddition = 0; // 펄 추가 기본값
   int syrupAddition = 0; // 시럽 추가 기본값
@@ -47,20 +45,113 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   int whippedCreamAddition = 0; // 휘핑크림 추가 기본값
   int keypoint = 0;
 
+  // 장바구니 리스트를 가져오는 함수
+  Future<void> fetchCartItems() async {
+    SecureStorageService storageService = SecureStorageService();
+    String? token = await storageService.getToken();
+    final response = await http.get(
+      Uri.parse('http://34.64.110.210:8080/cart/items'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        cartItems = jsonDecode(utf8.decode(response.bodyBytes));
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+      });
+      throw Exception('Failed to load cart items');
+    }
+  }
+
+  // 주문하기 버튼 클릭 시 장바구니 체크 후 모달 표시 함수
+  Future<void> handleOrder() async {
+    await fetchCartItems();
+
+    if (cartItems.isNotEmpty) {
+      _showCartExistsModal();
+    } else {
+      // 장바구니에 기존 항목이 없으면 바로 결제 화면으로 이동
+      _navigateToPaymentScreen();
+    }
+  }
+
+  // 장바구니에 항목이 존재할 때 표시할 모달
+  void _showCartExistsModal() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('알림'),
+          content: Text('장바구니에 담은 메뉴가 존재합니다. 그냥 결제 하시겠습니까?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ShoppingCartScreen(
+                      orderoption: widget.orderOption,
+                      storeId: widget.storeId,
+                    ),
+                  ),
+                );
+              },
+              child: Text('장바구니 가기'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _navigateToPaymentScreen();
+              },
+              child: Text('결제하기'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _navigateToPaymentScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentScreen(
+          product: widget.product,
+          storeId: widget.storeId,
+          orderOption: widget.orderOption,
+          quantity: quantity,
+          selectedCup: selectedSize,
+          specialRequest: specialRequest,
+          tk: widget.tk,
+          keypoint: keypoint,
+          orderprice: _getTotalPrice(),
+          onename: widget.product['name'],
+        ),
+      ),
+    );
+  }
+
   Future<void> _addToCart() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
-    print('toekb');
     final url = Uri.parse('http://34.64.110.210:8080/cart/add');
 
     // 서버로 보낼 데이터 생성
     final body = {
-      "productId": widget.product['productId'].toString(), // product ID
-      "size": selectedSize.toLowerCase(), // small, medium, large 등을 소문자로 전송
-      "temperature": widget.selectedTemperature.toLowerCase(), // ice, hot
+      "productId": widget.product['productId'].toString(),
+      "size": selectedSize.toLowerCase(),
+      "temperature": widget.selectedTemperature.toLowerCase(),
       "quantity": quantity,
       "personalOptions": {
-        "concentration": "LIGHT", // 농도는 기본값
+        "concentration": "LIGHT",
         "shotAddition": shotAddition,
         "personalTumbler": selectedTumbler,
         "pearlAddition": pearlAddition,
@@ -81,35 +172,100 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         },
         body: jsonEncode(body),
       );
-      print('haha ${response.statusCode}');
-      print(token);
-      // 서버 응답 확인
+
       if (response.statusCode == 200) {
-        // 성공적으로 추가된 경우
-        print('Cart item added successfully');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('장바구니에 추가되었습니다.')),
-        );
+        _showAddToCartModal();
       } else {
-        // 서버 에러 응답 처리
-        print('Failed to add item to cart: ${response.statusCode}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('장바구니 추가 실패: ${response.statusCode}')),
         );
       }
     } catch (e) {
-      // 네트워크 에러 처리
-      print('Error occurred while adding to cart: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('장바구니 추가 중 오류 발생')),
       );
     }
   }
 
+  // 장바구니 추가 확인 모달 창
+  void _showAddToCartModal() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          height: 200,
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '장바구니에 추가되었습니다.',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ShoppingCartScreen(
+                            orderoption: widget.orderOption,
+                            storeId: widget.storeId,
+                          ),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Color(0xFF5B1333)),
+                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: Text('장바구니 가기'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              OrderContent(
+                                storeId: int.parse(widget.storeId),
+                                orderMode: widget.orderOption,
+                              ),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF5B1333),
+                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    ),
+                    child: Text(
+                      '다른 메뉴 더보기',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // 요구사항을 저장하는 상태 변수
   String specialRequest = "";
 
-  // 각 사이즈에 따른 가격을 계산
   int _getBasePrice() {
     switch (selectedSize) {
       case "Small":
@@ -123,31 +279,28 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     }
   }
 
-  // 추가 가격 계산 (샷, 펄, 시럽, 설탕 추가 및 텀블러 사용에 따른 할인 적용)
   int _calculateAdditionalPrice() {
     int additionalPrice = 0;
 
-    additionalPrice += shotAddition * 500; // 샷당 500원 추가
-    additionalPrice += pearlAddition * 700; // 펄 추가시 700원 추가
-    additionalPrice += syrupAddition * 200; // 시럽 추가시 200원 추가
-    additionalPrice += sugarAddition * 200; // 설탕 추가시 200원 추가
-    additionalPrice += whippedCreamAddition * 700; // 휘핑크림 추가시 700원 추가
+    additionalPrice += shotAddition * 500;
+    additionalPrice += pearlAddition * 700;
+    additionalPrice += syrupAddition * 200;
+    additionalPrice += sugarAddition * 200;
+    additionalPrice += whippedCreamAddition * 700;
 
     if (selectedTumbler == "USE") {
-      additionalPrice -= 300; // 텀블러 사용시 300원 할인
+      additionalPrice -= 300;
     }
 
     return additionalPrice;
   }
 
-// 총 가격 계산 (기본 가격 + 추가 가격 + ICE 옵션에 따른 추가 금액, 수량 반영)
   int _getTotalPrice() {
-    int basePrice = _getBasePrice() + _calculateAdditionalPrice(); // 기본 가격에 추가 가격을 더함
-    int totalPrice = basePrice * quantity; // 수량을 곱하여 총 가격 계산
+    int basePrice = _getBasePrice() + _calculateAdditionalPrice();
+    int totalPrice = basePrice * quantity;
 
-    // ICE 선택 시 300원 추가
     if (widget.selectedTemperature == 'ICE') {
-      totalPrice += 300 * quantity; // 수량만큼 ICE 추가 비용을 곱함
+      totalPrice += 300 * quantity;
     }
 
     return totalPrice;
@@ -156,13 +309,13 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text(widget.product['name']),
       ),
-      body: SingleChildScrollView( // 스크롤 가능하도록 변경
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -212,21 +365,16 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               TextField(
                 decoration: InputDecoration(
                   labelText: "추가 요구사항을 적어주세요",
-                  labelStyle: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
                   hintText: "예: 얼음은 적게, 시럽 추가",
-                  hintStyle: TextStyle(color: Colors.grey[400]),
                   filled: true,
-                  fillColor: Colors.grey[100], // 배경색 추가
+                  fillColor: Colors.grey[100],
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12), // 더 둥근 테두리
-                    borderSide: BorderSide.none, // 테두리 제거
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Color(0xFF5B1333), width: 1.5), // 포커스 시 테두리 색상
+                    borderSide: BorderSide(color: Color(0xFF5B1333), width: 1.5),
                   ),
                   contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                 ),
@@ -238,7 +386,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 },
               ),
               SizedBox(height: 110),
-              SizedBox(height: 30),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -282,10 +429,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        _addToCart();
-                        _showModalBottomSheet(context);
-                      },
+                      onPressed: _addToCart,
                       style: OutlinedButton.styleFrom(
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -302,26 +446,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        keypoint = 0;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentScreen(
-                              product: widget.product,
-                              storeId: widget.storeId,
-                              orderOption: widget.orderOption,
-                              quantity: quantity,
-                              selectedCup: selectedSize,
-                              specialRequest: specialRequest,
-                              tk: widget.tk,
-                              keypoint: keypoint,
-                              orderprice: _getTotalPrice(),
-                              onename : widget.product['name'],
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: handleOrder,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF5B1333),
                         shape: RoundedRectangleBorder(
@@ -346,7 +471,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
-  // 사이즈 옵션 위젯 빌드
   Widget _buildSizeOption(String title, int price) {
     bool isSelected = selectedSize == title;
 
@@ -388,7 +512,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
-  // 퍼스널 옵션 모달 창
   void _showPersonalOptionModal(BuildContext context) {
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -404,13 +527,12 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 뒤로가기 버튼
                     Align(
                       alignment: Alignment.topLeft,
                       child: IconButton(
                         icon: Icon(Icons.arrow_back),
                         onPressed: () {
-                          Navigator.pop(context); // 모달 닫기
+                          Navigator.pop(context);
                         },
                       ),
                     ),
@@ -421,74 +543,46 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    _buildOptionSection(
-                      "샷 추가",
-                      shotAddition,
-                          (value) {
-                        setModalState(() {
-                          shotAddition = value;
-                        });
-                        setState(() {}); // 업데이트 후 가격 반영
-                      },
-                    ),
-                    _buildOptionSection(
-                      "펄 추가",
-                      pearlAddition,
-                          (value) {
-                        setModalState(() {
-                          pearlAddition = value;
-                        });
-                        setState(() {}); // 업데이트 후 가격 반영
-                      },
-                    ),
-                    _buildOptionSection(
-                      "설탕 추가",
-                      sugarAddition,
-                          (value) {
-                        setModalState(() {
-                          sugarAddition = value;
-                        });
-                        setState(() {}); // 업데이트 후 가격 반영
-                      },
-                    ),
-                    _buildOptionSection(
-                      "휘핑크림 추가",
-                      whippedCreamAddition,
-                          (value) {
-                        setModalState(() {
-                          whippedCreamAddition = value;
-                        });
-                        setState(() {}); // 업데이트 후 가격 반영
-                      },
-                    ),
-                    _buildHorizontalRadioOption(
-                      "얼음",
-                      selectedIce,
-                      ["NONE", "LESS", "NORMAL", "MORE"],
-                          (value) {
-                        setModalState(() {
-                          selectedIce = value!;
-                        });
-                        setState(() {});
-                      },
-                    ),
-                    _buildHorizontalRadioOption(
-                      "텀블러 사용 여부",
-                      selectedTumbler,
-                      ["USE", "NOT_USE"],
-                          (value) {
-                        setModalState(() {
-                          selectedTumbler = value!;
-                        });
-                        setState(() {}); // 업데이트 후 가격 반영
-                      },
-                    ),
-
+                    _buildOptionSection("샷 추가", shotAddition, (value) {
+                      setModalState(() {
+                        shotAddition = value;
+                      });
+                      setState(() {});
+                    }),
+                    _buildOptionSection("펄 추가", pearlAddition, (value) {
+                      setModalState(() {
+                        pearlAddition = value;
+                      });
+                      setState(() {});
+                    }),
+                    _buildOptionSection("설탕 추가", sugarAddition, (value) {
+                      setModalState(() {
+                        sugarAddition = value;
+                      });
+                      setState(() {});
+                    }),
+                    _buildOptionSection("휘핑크림 추가", whippedCreamAddition, (value) {
+                      setModalState(() {
+                        whippedCreamAddition = value;
+                      });
+                      setState(() {});
+                    }),
+                    _buildHorizontalRadioOption("얼음", selectedIce, ["NONE", "LESS", "NORMAL", "MORE"], (value) {
+                      setModalState(() {
+                        selectedIce = value!;
+                      });
+                      setState(() {});
+                    }),
+                    _buildHorizontalRadioOption("텀블러 사용 여부", selectedTumbler, ["USE", "NOT_USE"], (value) {
+                      setModalState(() {
+                        selectedTumbler = value!;
+                      });
+                      setState(() {});
+                    }),
                     SizedBox(height: 10),
-
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(context); // 모달 닫기
+                        Navigator.pop(context);
                       },
                       child: Text("확인", style: TextStyle(fontSize: 18, color: Color(0xFF5B1333))),
                     ),
@@ -541,7 +635,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
     );
   }
 
-  // 가로로 배치된 라디오 버튼 그룹 (얼음 옵션 및 텀블러 사용 여부)
   Widget _buildHorizontalRadioOption(String title, String selectedValue, List<String> options, Function(String?) onChanged) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,81 +663,6 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
           }).toList(),
         ),
       ],
-    );
-  }
-
-  // 모달 창 표시하는 함수
-  void _showModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          height: 200,
-          padding: EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '장바구니에 추가되었습니다.',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // 장바구니로 이동하는 로직 추가
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ShoppingCartScreen(orderoption : widget.orderOption,storeId: widget.storeId,)),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Color(0xFF5B1333)),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text('장바구니 가기'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              OrderContent(
-                                storeId: int.parse(widget.storeId),
-                                orderMode: widget.orderOption,
-                              ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF5B1333),
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 32, vertical: 12),
-                    ),
-                    child: Text(
-                      '다른 메뉴 더보기',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

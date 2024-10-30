@@ -399,7 +399,7 @@ class HomeContent extends StatefulWidget {
 class _HomeContentState extends State<HomeContent> {
   List<dynamic> products = [];
   bool isLoggedIn = false; // 로그인 상태를 확인하는 변수
-  String userName = ''; // 사용자 이름 저장 변수'
+  String userName = ''; // 사용자 이름 저장 변수
   final ApiService apiService = ApiService();
 
   @override
@@ -707,12 +707,10 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 }
-
 class OrderContent extends StatefulWidget {
   final int storeId; // 매장 ID
   final String orderMode; // 매장이용 또는 To-Go 정보
 
-  // 생성자에서 storeId와 orderMode를 받도록 수정
   OrderContent({required this.storeId, required this.orderMode});
 
   @override
@@ -721,8 +719,13 @@ class OrderContent extends StatefulWidget {
 
 class _OrderContentState extends State<OrderContent> {
   List<dynamic> products = [];
+  List<dynamic> filteredProducts = [];
   final ApiService apiService = ApiService();
   String tokentest = ''; // token 저장 변수 추가
+  String selectedCategory = '전체'; // 선택된 카테고리 기본값
+
+  // 카테고리 목록
+  List<String> categories = ['전체', 'Coffee', 'Tea Latte', 'Yogurt Smoothie', 'Bubble Tea', 'Frappe', 'Frappuccino', 'Etc'];
 
   @override
   void initState() {
@@ -740,64 +743,109 @@ class _OrderContentState extends State<OrderContent> {
     });
   }
 
+  // 제품 정보를 가져오는 함수
   void fetchProducts() async {
     try {
       Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
-        print(products);
+        filteredProducts = products; // 기본적으로 전체 제품을 표시
       });
     } catch (e) {
       print('Error: $e');
     }
   }
 
+  // 카테고리 변경 시 필터링하는 함수
+  void filterProductsByCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+      if (category == '전체') {
+        filteredProducts = products;
+      } else {
+        filteredProducts = products.where((product) => product['category'] == category).toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: products.isEmpty
-          ? Center(child: CircularProgressIndicator()) // 로딩 중일 때 표시
-          : ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          print("Product data: ${products[index]}");
-          return ListTile(
-            leading: SizedBox(
-              width: 80, // 원하는 고정 너비
-              height: 80, // 원하는 고정 높이
-              child: Image.network(
-                'http://34.64.110.210:8080/' + products[index]['image'],
-                fit: BoxFit.cover, // 이미지 크기에 맞추기
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(Icons.error);
-                },
+      appBar: AppBar(
+        title: Text('주문하기'),
+        backgroundColor: Colors.white,
+      ),
+      body: Column(
+        children: [
+          // 카테고리 선택 탭
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 1, vertical: 5),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: categories.map((category) {
+                  return GestureDetector(
+                    onTap: () => filterProductsByCategory(category),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 1.0),
+                      child: Chip(
+                        label: Text(category),
+                        backgroundColor: selectedCategory == category ? Color(0xFF5B1333) : Colors.white,
+                        labelStyle: TextStyle(
+                          color: selectedCategory == category ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
-            title: Text(products[index]['name']),
-            subtitle: Text(products[index]['smallPrice'].toString()),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProductDetailScreen(
-                    product: products[index], // 제품 정보 전달
-                    storeId: widget.storeId.toString(), // storeId 전달
-                    orderOption: widget.orderMode, // orderOption 전달 (매장 이용 또는 To-Go)
-                    tk: tokentest,
+          ),
+          Expanded(
+            child: filteredProducts.isEmpty
+                ? Center(child: CircularProgressIndicator()) // 로딩 중일 때 표시
+                : ListView.builder(
+              itemCount: filteredProducts.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  leading: SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: Image.network(
+                      'http://34.64.110.210:8080/' + filteredProducts[index]['image'],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Icon(Icons.error);
+                      },
+                    ),
                   ),
-                ),
-              );
-            },
-          );
-        },
+                  title: Text(filteredProducts[index]['name']),
+                  subtitle: Text('${filteredProducts[index]['smallPrice']}원'),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen(
+                          product: filteredProducts[index],
+                          storeId: widget.storeId.toString(),
+                          orderOption: widget.orderMode,
+                          tk: tokentest,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 30, right: 30),
         child: FloatingActionButton(
           backgroundColor: Colors.black,
           onPressed: () {
-            // Define the action when the FAB is pressed, e.g., navigate to the cart screen
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -808,14 +856,12 @@ class _OrderContentState extends State<OrderContent> {
               ),
             );
           },
-          child: Icon(Icons.shopping_cart, color: Colors.white), // Cart icon with white color
+          child: Icon(Icons.shopping_cart, color: Colors.white),
         ),
       ),
     );
   }
 }
-
-
 
 class OtherContent extends StatefulWidget {
   @override

@@ -36,10 +36,10 @@ class _LoginScreenState extends State<LoginScreen> {
     final response = await http.post(
       Uri.parse('http://34.64.110.210:8080/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'userid': id, 'password': password}), // 서버에서 기대하는 키 이름 확인
+      body: jsonEncode({'userid': id, 'password': password}),
     );
-
-
+    print("로그인 : ${response.body}");
+    print(response.request);
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
 
@@ -59,9 +59,14 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } else {
       // 로그인 실패 시 서버에서 제공한 메시지를 파싱하여 모달창에 표시
-      final Map<String, dynamic> errorResponse = jsonDecode(response.body);
-      String errorMessage = errorResponse['message'] ?? '로그인에 실패했습니다. 다시 시도해 주세요.';
-      _showErrorModal(errorMessage);
+      try {
+        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
+        String errorMessage = errorResponse['message'] ?? '로그인에 실패했습니다. 다시 시도해 주세요.';
+        _showErrorModal(errorMessage);
+      } catch (e) {
+        // JSON 파싱 실패 시 기본 오류 메시지 표시
+        _showErrorModal('로그인에 실패했습니다. 다시 시도해 주세요.');
+      }
     }
   }
 
@@ -163,7 +168,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   TextButton(
                     onPressed: () {
-                      // 아이디 찾기 동작
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => IdFindScreen()),
@@ -174,7 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text('|'),
                   TextButton(
                     onPressed: () {
-                      // 비밀번호 찾기 동작
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => PasswordFindScreen()),
@@ -197,7 +200,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(height: 10),
                     OutlinedButton(
                       onPressed: () {
-                        // 회원가입 화면으로 이동
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => TermsOfUseScreen()),

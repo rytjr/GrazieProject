@@ -24,14 +24,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면이 시작될 때 토큰 출력
-    print('Token: ${widget.tk}');
+    print('Token: ${widget.tk}'); // 화면이 시작될 때 토큰 출력
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // 키보드 올라와도 버튼 고정
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.product['name'] ?? '상품 이름 없음'),
@@ -45,7 +44,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               // 이미지 영역
               Image.network(
-                'http://34.64.110.210:8080/' + widget.product['image'] ?? 'https://example.com/default_image.png', // 기본 이미지 URL
+                'http://34.64.110.210:8080/' + widget.product['image'] ?? 'https://example.com/default_image.png',
                 width: double.infinity,
                 height: 190,
                 fit: BoxFit.cover,
@@ -93,53 +92,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   children: _buildTemperatureButtons(widget.product['iceAble'] ?? false, widget.product['hotAble'] ?? false),
                 ),
               ),
-              // 주문하기 버튼
-              SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(22, 120, 22, 5),
-                child: Column(
-                  children: [
-                    SizedBox(height: 15),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: selectedTemperature == null
-                            ? null // 온도를 선택하지 않으면 버튼 비활성화
-                            : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductOrderScreen(
-                                product: widget.product,
-                                storeId: widget.storeId,  // 매장 ID 전달
-                                orderOption: widget.orderOption,  // 매장이용 or To-Go 전달
-                                selectedTemperature: selectedTemperature!,  // 선택된 온도 전달
-                                tk: widget.tk,
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF5B1333),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: Text(
-                          "주문하기",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ],
+          ),
+        ),
+      ),
+      // 주문하기 버튼을 하단에 고정
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 22),
+        child: SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: selectedTemperature == null
+                ? null // 온도를 선택하지 않으면 버튼 비활성화
+                : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProductOrderScreen(
+                    product: widget.product,
+                    storeId: widget.storeId,
+                    orderOption: widget.orderOption,
+                    selectedTemperature: selectedTemperature!,
+                    tk: widget.tk,
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: selectedTemperature == null ? Colors.grey : Color(0xFF5B1333),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              "주문하기",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
           ),
         ),
       ),
@@ -156,7 +149,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: Padding(
             padding: const EdgeInsets.only(left: 22.0, right: 5.0),
             child: SizedBox(
-              width: double.infinity,
               height: 32,
               child: OutlinedButton(
                 onPressed: () {
@@ -165,7 +157,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   });
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown), // 선택된 버튼 강조
+                  side: BorderSide(color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -175,7 +167,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown, // 선택된 텍스트 강조
+                    color: selectedTemperature == 'ICE' ? Colors.blue : Colors.brown,
                   ),
                 ),
               ),
@@ -186,12 +178,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     if (hotAble) {
-      buttons.add(
+      buttons.add( 
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(left: 5.0, right: 22.0),
             child: SizedBox(
-              width: double.infinity,
               height: 32,
               child: OutlinedButton(
                 onPressed: () {
@@ -200,7 +191,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   });
                 },
                 style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown), // 선택된 버튼 강조
+                  side: BorderSide(color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(5),
                   ),
@@ -210,7 +201,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown, // 선택된 텍스트 강조
+                    color: selectedTemperature == 'HOT' ? Colors.blue : Colors.brown,
                   ),
                 ),
               ),

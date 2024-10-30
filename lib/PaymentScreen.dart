@@ -296,7 +296,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                       builder: (context) => HomeScreen()), // 회원정보 수정 화면으로 이동
                 );
               },
-              child: Icon(Icons.shopping_cart, color: Colors.white),
+              child: Icon(Icons.home, color: Colors.white),
             ),
           ),
         ],
