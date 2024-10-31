@@ -56,7 +56,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
       );
     } else {
       // 비밀번호 변경 실패 모달 띄우기
-      _showResultModal('현재 비밀번호를 확인해 주세요.', false);
+      _showResultModal('비밀번호를 확인해 주세요.', false);
     }
   }
 

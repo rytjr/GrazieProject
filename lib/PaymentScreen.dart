@@ -179,7 +179,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         int itemPrice = item['price'] ?? 0;
         return itemPrice > 0 ? itemPrice : calculateTotalPrice();
       }
-      finalPrice = getDisplayPrice();
+      finalPrice = calculateTotalPrice();
       return {
         "productId": item['productId'] ?? 1,
         "productPrice": getDisplayPrice(),
@@ -224,11 +224,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
         },
         body: jsonEncode(createOrderData()),
       );
-
+      print("오더 생서 : ${response.body}");
+      print(response.request);
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         orderId = responseData['orderId'].toString();
-        finalPrice = responseData['finalPrice'];
+        finalPrice = calculateTotalPrice();
       } else {
         print('Order submission failed: ${response.body}');
       }

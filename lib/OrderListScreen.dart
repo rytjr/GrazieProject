@@ -64,7 +64,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
         'Authorization': 'Bearer $token',
       },
     );
-
+    print("주문내역 : ${response.body}");
+    print(response.request);
     if (response.statusCode == 200) {
       setState(() {
         orderList = jsonDecode(utf8.decode(response.bodyBytes));

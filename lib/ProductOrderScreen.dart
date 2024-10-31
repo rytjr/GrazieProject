@@ -88,6 +88,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('알림'),
           content: Text('장바구니에 담은 메뉴가 존재합니다. 그냥 결제 하시겠습니까?'),
           actions: [
@@ -104,14 +105,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   ),
                 );
               },
-              child: Text('장바구니 가기'),
+              child: Text('장바구니 가기',style: TextStyle(fontSize: 14, color: Color(0xFF5B1333))),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _navigateToPaymentScreen();
               },
-              child: Text('결제하기'),
+              child: Text('결제하기',style: TextStyle(fontSize: 14, color: Color(0xFF5B1333))),
             ),
           ],
         );
@@ -315,161 +316,177 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         backgroundColor: Colors.white,
         title: Text(widget.product['name']),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.product['name'],
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              SizedBox(height: 20),
-              Text(
-                "사이즈 선택",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF5B1333),
-                ),
-              ),
-              SizedBox(height: 10),
-              Row(
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSizeOption("Small", widget.product['smallPrice']),
-                  SizedBox(width: 10),
-                  _buildSizeOption("Medium", widget.product['mediumPrice']),
-                  SizedBox(width: 10),
-                  _buildSizeOption("Large", widget.product['largePrice']),
-                ],
-              ),
-              SizedBox(height: 20),
-              ListTile(
-                title: Text(
-                  "퍼스널 옵션",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                trailing: Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  _showPersonalOptionModal(context);
-                },
-              ),
-              SizedBox(height: 10),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: "추가 요구사항을 적어주세요",
-                  hintText: "예: 얼음은 적게, 시럽 추가",
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Color(0xFF5B1333), width: 1.5),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                ),
-                maxLines: 2,
-                onChanged: (value) {
-                  setState(() {
-                    specialRequest = value;
-                  });
-                },
-              ),
-              SizedBox(height: 110),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        onPressed: () {
-                          if (quantity > 1) {
-                            setState(() {
-                              quantity--;
-                            });
-                          }
-                        },
-                        icon: Icon(Icons.remove),
-                      ),
-                      Text(
-                        quantity.toString(),
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            quantity++;
-                          });
-                        },
-                        icon: Icon(Icons.add),
-                      ),
-                    ],
-                  ),
                   Text(
-                    "${_getTotalPrice()}원",
+                    widget.product['name'],
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _addToCart,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "담기",
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
-                      ),
+                  SizedBox(height: 20),
+                  Text(
+                    "사이즈 선택",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF5B1333),
                     ),
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: handleOrder,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF5B1333),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: Text(
-                        "주문하기",
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      _buildSizeOption("Small", widget.product['smallPrice']),
+                      SizedBox(width: 10),
+                      _buildSizeOption("Medium", widget.product['mediumPrice']),
+                      SizedBox(width: 10),
+                      _buildSizeOption("Large", widget.product['largePrice']),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ListTile(
+                    title: Text(
+                      "퍼스널 옵션",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
+                    trailing: Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      _showPersonalOptionModal(context);
+                    },
                   ),
+                  SizedBox(height: 10),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: "추가 요구사항을 적어주세요",
+                      hintText: "예: 얼음은 적게, 시럽 추가",
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Color(0xFF5B1333), width: 1.5),
+                      ),
+                      contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                    ),
+                    maxLines: 2,
+                    onChanged: (value) {
+                      setState(() {
+                        specialRequest = value;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 110),
                 ],
               ),
-            ],
+            ),
           ),
-        ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 30.0, left: 16, right: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (quantity > 1) {
+                                setState(() {
+                                  quantity--;
+                                });
+                              }
+                            },
+                            icon: Icon(Icons.remove),
+                          ),
+                          Text(
+                            quantity.toString(),
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              setState(() {
+                                quantity++;
+                              });
+                            },
+                            icon: Icon(Icons.add),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        "${_getTotalPrice()}원",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _addToCart,
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            "담기",
+                            style: TextStyle(
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: handleOrder,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF5B1333),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            "주문하기",
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+
 
   Widget _buildSizeOption(String title, int price) {
     bool isSelected = selectedSize == title;

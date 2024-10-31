@@ -98,17 +98,17 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 );
               },
             ),
-            Divider(),
-            ListTile(
-              title: Text('비밀번호 재발급'),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => PasswordNewscreen()), // 쿠폰 화면으로 이동
-                );
-              },
-            ),
+            // Divider(),
+            // ListTile(
+            //   title: Text('비밀번호 재발급'),
+            //   trailing: Icon(Icons.arrow_forward_ios),
+            //   onTap: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(builder: (context) => PasswordNewscreen()), // 쿠폰 화면으로 이동
+            //     );
+            //   },
+            // ),
             Divider(),
             ListTile(
               title: Text('회원정보 수정'),

@@ -2,7 +2,6 @@ import 'dart:convert'; // JSON 파싱을 위해 추가
 import 'package:flutter/material.dart';
 import 'package:fluttertest/LoginScreen.dart';
 import 'package:fluttertest/IdFindScreen.dart';
-import 'package:fluttertest/SecureStorageService.dart';
 import 'package:fluttertest/UserInScreen.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,6 +13,7 @@ class PasswordFindScreen extends StatefulWidget {
 class _PasswordFindScreenState extends State<PasswordFindScreen> {
   final TextEditingController _emailController = TextEditingController(); // 이메일 입력값을 제어하는 컨트롤러
   final TextEditingController _idController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,12 +114,10 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
   // 비밀번호 변경 요청
   Future<void> _sendNewPassword(BuildContext context) async {
     String email = _emailController.text; // 이메일 값 가져오기
-    String id = _idController.text; // 이메일 값 가져오기
-    print("이메일 : $email");
+    String id = _idController.text; // 아이디 값 가져오기
+
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('이메일을 입력해주세요.')),
-      );
+      _showErrorDialog('이메일을 입력해주세요.');
       return;
     }
     final response = await http.post(
@@ -127,24 +125,44 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({"userId" : id,"email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
+      body: jsonEncode({"userId" : id, "email": email}), // 사용자가 입력한 이메일을 JSON body에 포함
     );
+
     print("비밀번호 찾기 응답 상태: ${response.statusCode}");
     print("비밀번호 찾기 응답 본문: ${response.body}");
     print("전달된 아이디: $id");
     print("전달된 이메일: $email");
+
     if (response.statusCode == 200) {
       Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => LoginScreen()),
       );
-
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('비밀번호 변경에 실패했습니다.')),
-      );
+      _showErrorDialog('아이디,이메일을 확인해 주세요.');
     }
+  }
+
+  // 오류 메시지 모달 창 표시
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('오류'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

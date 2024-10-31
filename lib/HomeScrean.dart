@@ -243,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: () {
         // storeId가 String으로 전달되었을 수 있으므로 이를 int로 변환
-        int storeIdInt = int.tryParse(store['id'].toString()) ?? 0; // 변환 실패 시 0 할당
+        int storeIdInt = int.tryParse(store['store_id'].toString()) ?? 0; // 변환 실패 시 0 할당
 
         setState(() {
           orderMode = text; // 매장 이용 또는 To-Go 저장

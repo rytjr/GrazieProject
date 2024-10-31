@@ -130,7 +130,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     return cartItems.fold<int>(0, (int sum, item) {
       int price = (item['price'] ?? 0) as int;
       int quantity = (item['quantity'] ?? 1) as int;
-      return sum + price * quantity;
+      return sum + price;
     });
   }
 
