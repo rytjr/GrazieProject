@@ -18,6 +18,7 @@ class ShoppingCartScreen extends StatefulWidget {
 class _CartScreenState extends State<ShoppingCartScreen> {
   List<dynamic> cartItems = [];
   bool isLoading = true;
+  int totalPrice = 0;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     if (response.statusCode == 200) {
       setState(() {
         cartItems = jsonDecode(decodedResponseBody);
+        totalPrice = calculateTotalPrice();
         isLoading = false;
       });
     } else {
@@ -55,7 +57,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     setState(() {
       cartItems[index]['quantity']++;
     });
-
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final response = await http.patch(
@@ -65,11 +66,16 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         'Authorization': 'Bearer $token'
       },
       body: jsonEncode({
-        'cartItemId': cartItems[index]['productId'].toString(),
+        'cartItemId': cartItems[index]['cartId'].toString(),
       }),
     );
-    print("증가 요청 상태 코드: ${response.statusCode}");
-    print("증가 요청 응답 본문: ${response.body}");
+
+    if (response.statusCode == 200) {
+      setState(() {
+        cartItems[index]['price'] = int.parse(response.body); // 해당 아이템 가격 업데이트
+        totalPrice = calculateTotalPrice();
+      });
+    }
   }
 
   Future<void> decreaseQuantity(int index) async {
@@ -87,17 +93,21 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           'Authorization': 'Bearer $token'
         },
         body: jsonEncode({
-          'cartItemId': cartItems[index]['productId'].toString(),
+          'cartItemId': cartItems[index]['cartId'].toString(),
         }),
       );
 
-      print("감소 요청 상태 코드: ${response.statusCode}");
-      print("감소 요청 응답 본문: ${response.body}");
+      if (response.statusCode == 200) {
+        setState(() {
+          cartItems[index]['price'] = int.parse(response.body); // 해당 아이템 가격 업데이트
+          totalPrice = calculateTotalPrice();
+        });
+      }
     }
   }
 
   Future<void> deleteItem(int index) async {
-    final cartItemId = cartItems[index]['productId'];
+    final cartItemId = cartItems[index]['cartId'];
 
     if (cartItemId == null) {
       print('삭제 실패: cartItemId가 null입니다.');
@@ -122,15 +132,18 @@ class _CartScreenState extends State<ShoppingCartScreen> {
       }),
     );
 
-    print('삭제 요청 상태 코드: ${response.statusCode}');
-    print('삭제 요청 응답 본문: ${response.body}');
+    if (response.statusCode == 200) {
+      setState(() {
+        totalPrice = calculateTotalPrice();
+      });
+    }
   }
 
   int calculateTotalPrice() {
     return cartItems.fold<int>(0, (int sum, item) {
       int price = (item['price'] ?? 0) as int;
       int quantity = (item['quantity'] ?? 1) as int;
-      return sum + price;
+      return sum + (price);
     });
   }
 
@@ -162,7 +175,8 @@ class _CartScreenState extends State<ShoppingCartScreen> {
                 itemBuilder: (context, index) {
                   return _buildCartItem(cartItems[index], index);
                 },
-                separatorBuilder: (context, index) => Divider(thickness: 1, color: Colors.grey[300]),
+                separatorBuilder: (context, index) =>
+                    Divider(thickness: 1, color: Colors.grey[300]),
               ),
             ),
             SizedBox(height: 20),
@@ -188,7 +202,9 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Image.network(
-            item['image'] != null ? 'http://34.64.110.210:8080/' + item['image'] : 'https://via.placeholder.com/50',
+            item['image'] != null
+                ? 'http://34.64.110.210:8080/' + item['image']
+                : 'https://via.placeholder.com/50',
             width: 50,
             height: 50,
             fit: BoxFit.cover,
@@ -199,8 +215,10 @@ class _CartScreenState extends State<ShoppingCartScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item['productName'] ?? '상품 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Text('$temperature / $cupType', style: TextStyle(fontSize: 14, color: Colors.grey)),
+                Text(item['productName'] ?? '상품 이름 없음',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Text('$temperature / $cupType',
+                    style: TextStyle(fontSize: 14, color: Colors.grey)),
                 Row(
                   children: [
                     IconButton(
@@ -220,7 +238,8 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${(item['price'] ?? 0)}원', style: TextStyle(fontSize: 16, color: Colors.black)),
+              Text('${(item['price'] ?? 0)}원',
+                  style: TextStyle(fontSize: 16, color: Colors.black)),
               SizedBox(height: 10),
               GestureDetector(
                 onTap: () => deleteItem(index),
@@ -236,7 +255,48 @@ class _CartScreenState extends State<ShoppingCartScreen> {
     );
   }
 
-  // 개인 맞춤 옵션을 모달로 표시
+  Widget _buildTotalPriceRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text('총 ${cartItems.length}개  ', style: TextStyle(fontSize: 16)),
+        Text('${totalPrice}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildOrderButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => PaymentScreen(
+                  product: cartItems,
+                  storeId: widget.storeId,
+                  orderOption: widget.orderoption,
+                  quantity: cartItems.length,
+                  selectedCup: 'NOT USE',
+                  specialRequest: '',
+                  tk: '',
+                  keypoint: 1,
+                  orderprice: totalPrice,
+                  onename: '',
+                )),
+          );
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF5B1333),
+        ),
+        child: Text('${totalPrice}원 주문하기',
+            style: TextStyle(fontSize: 18, color: Colors.white)),
+      ),
+    );
+  }
+
   void _showPersonalOptionsDialog(Map<String, dynamic> options) {
     showDialog(
       context: context,
@@ -280,47 +340,6 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
           Text(value, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
         ],
-      ),
-    );
-  }
-
-  Widget _buildTotalPriceRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Text('총 ${cartItems.length}개  ', style: TextStyle(fontSize: 16)),
-        Text('${calculateTotalPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildOrderButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => PaymentScreen(
-                  product: [],
-                  storeId: widget.storeId,
-                  orderOption: widget.orderoption,
-                  quantity: 1,
-                  selectedCup: 'NOT USE',
-                  specialRequest: '',
-                  tk: '',
-                  keypoint: 1,
-                  orderprice: 0,
-                  onename: '',
-                )),
-          );
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF5B1333),
-        ),
-        child: Text('${calculateTotalPrice()}원 주문하기', style: TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }

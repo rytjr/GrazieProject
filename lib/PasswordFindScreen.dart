@@ -47,7 +47,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text('비밀번호 찾기',style: TextStyle(fontSize: 16, color: Colors.white)),
+                child: Text('비밀번호 찾기', style: TextStyle(fontSize: 16, color: Colors.white)),
               ),
             ),
             SizedBox(height: 10),
@@ -134,14 +134,36 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
     print("전달된 이메일: $email");
 
     if (response.statusCode == 200) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => LoginScreen()),
-      );
+      _showSuccessDialog(context); // 성공 메시지 모달 표시
     } else {
-      _showErrorDialog('아이디,이메일을 확인해 주세요.');
+      _showErrorDialog('아이디, 이메일을 확인해 주세요.');
     }
+  }
+
+  // 성공 메시지 모달 창 표시
+  void _showSuccessDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: Text('알림'),
+          content: Text('임시 비밀번호가 이메일로 발송되었습니다.'),
+          actions: [
+            TextButton(
+              child: Text('확인'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // 오류 메시지 모달 창 표시
@@ -150,6 +172,7 @@ class _PasswordFindScreenState extends State<PasswordFindScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: Colors.white,
           title: Text('오류'),
           content: Text(message),
           actions: [

@@ -59,6 +59,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
       setState(() {
         orders = [
           {
+            'productId' : widget.product['productId'],
             'name': widget.product['name'],
             'price': widget.orderprice,
             'quantity': widget.quantity,
@@ -433,6 +434,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
           setState(() {
             selectedCouponId = selectedCoupon;
           });
+          await submitOrder();
+          await Future.delayed(Duration(seconds: 1));
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => impart(finalPrice: finalPrice, name: name, phone: phone, email: email),
+            ),
+          );
+          impuid = result['imp_uid'];
+          sendPaymentProgress();
         }
       },
     );

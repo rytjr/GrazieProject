@@ -217,16 +217,16 @@ class _OrderListScreenState extends State<OrderListScreen> {
     final formattedDate = DateFormat('yyyy-MM-dd').format(orderDate);
 
     return ListTile(
-      leading: product != null
-          ? Image.network(
-        'http://34.64.110.210:8080/' + product['image'],
-        width: 50,
-        height: 50,
-        errorBuilder: (context, error, stackTrace) {
-          return Icon(Icons.image_not_supported);
+      leading: CircleAvatar(
+        radius: 35, // Sets the circle to a diameter of 50x50
+        backgroundImage: product != null
+            ? NetworkImage('http://34.64.110.210:8080/' + product['image'])
+            : null,
+        onBackgroundImageError: (error, stackTrace) {
+          print(error); // Error handling for image load failure
         },
-      )
-          : Icon(Icons.image_not_supported),
+        child: product == null ? Icon(Icons.image_not_supported) : null,
+      ),
       title: Text(product != null ? product['name'] : '제품 이름 없음'),
       subtitle: Text(
         '가격: ${firstItem['product_price']}원\n주문 날짜: $formattedDate',

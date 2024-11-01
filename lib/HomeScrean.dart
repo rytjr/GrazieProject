@@ -809,16 +809,14 @@ class _OrderContentState extends State<OrderContent> {
               itemCount: filteredProducts.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  leading: SizedBox(
-                    width: 80,
-                    height: 80,
-                    child: Image.network(
+                  leading: CircleAvatar(
+                    radius: 30, // 60x60 크기로 설정
+                    backgroundImage: NetworkImage(
                       'http://34.64.110.210:8080/' + filteredProducts[index]['image'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.error);
-                      },
                     ),
+                    onBackgroundImageError: (error, stackTrace) {
+                      print(error); // 로드 실패 시 처리
+                    },
                   ),
                   title: Text(filteredProducts[index]['name']),
                   subtitle: Text('${filteredProducts[index]['smallPrice']}원'),

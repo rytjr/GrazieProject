@@ -60,8 +60,24 @@ class _IdFindScreenState extends State<IdFindScreen> {
           },
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('아이디 찾기 요청에 실패했습니다. 다시 시도해주세요.')),
+        final errorMessage = jsonDecode(response.body)?? '아이디 찾기 요청에 실패했습니다.';
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              title: Text('요청 실패'),
+              content: Text(errorMessage),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // 모달창 닫기
+                  },
+                  child: Text('확인'),
+                ),
+              ],
+            );
+          },
         );
       }
     } catch (e) {
