@@ -19,6 +19,7 @@ class PaymentScreen extends StatefulWidget {
   final int keypoint;
   final int orderprice;
   final String onename;
+  final String selectedTemperature;
 
   PaymentScreen({
     required this.product,
@@ -31,6 +32,7 @@ class PaymentScreen extends StatefulWidget {
     required this.keypoint,
     required this.orderprice,
     required this.onename,
+    required this.selectedTemperature,
   });
 
   @override
@@ -66,6 +68,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
             'image': widget.product['image'],
             'size': widget.selectedCup,
             'cup': widget.selectedCup,
+            'temperature' : widget.selectedTemperature,
           }
         ];
         isLoading = false;
@@ -91,13 +94,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
         orders = jsonDecode(utf8.decode(response.bodyBytes));
         isLoading = false;
       });
+      // 여기에서 데이터를 확인하기 위해 로그 추가
+      print("Fetched orders: $orders");
     } else {
       setState(() {
         isLoading = false;
       });
+      print('Failed to load orders with status code: ${response.statusCode}');
       throw Exception('Failed to load orders');
     }
   }
+
 
   Future<void> fetchUserInfo() async {
     SecureStorageService storageService = SecureStorageService();
@@ -127,9 +134,38 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  int calculateTotalPrice() {
-    return orders.fold(0, (int sum, item) => sum + ((item['price'] ?? 0) as num).toInt());
+  void calculateDiscountedOrderItems() {
+    for (var item in orders) {
+      if (selectedCouponId != null && item['productName'] == '아메리카노') {
+        int itemPrice = (item['price'] ?? 0) as int;
+        item['discountedPrice'] = (itemPrice * 0.8).toInt(); // Apply 20% discount
+      } else {
+        item['discountedPrice'] = item['price']; // No discount
+      }
+    }
   }
+
+
+
+  int calculateTotalPrice() {
+    int total = 0;
+
+    for (var item in orders) {
+      int itemPrice = (item['price'] ?? 0) as int;
+      int itemQuantity = (item['quantity'] ?? 1) as int;
+
+      // Apply 20% discount only for "아메리카노" in the total calculation if a coupon is selected
+      if (selectedCouponId != null && item['productName'] == '아메리카노') {
+        itemPrice = (itemPrice * 0.8).toInt(); // Apply 20% discount
+      }
+
+      total += (itemPrice);
+    }
+
+    return total;
+  }
+
+
 
   Future<void> sendPaymentProgress() async {
     if (impuid.isEmpty || orderId.isEmpty) {
@@ -175,7 +211,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           : personalOptions['concentration'] ?? "NORMAL";
 
       int convertBoolToInt(dynamic value) => value == true ? 1 : 0;
-      print('하나 가격 : ${item['price']}');
       int getDisplayPrice() {
         int itemPrice = item['price'] ?? 0;
         return itemPrice > 0 ? itemPrice : calculateTotalPrice();
@@ -183,10 +218,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       finalPrice = calculateTotalPrice();
       return {
         "productId": item['productId'] ?? 1,
-        "productPrice": getDisplayPrice(),
+        "productPrice": item['price'] ?? 0,
         "quantity": item['quantity'] ?? 1,
         "size": item['size'] ?? "Solo",
-        "temperature": personalOptions['temperature'] ?? "hot",
+        "temperature": item['temperature'] ?? "hot",
         "couponId": selectedCouponId != null ? int.parse(selectedCouponId!) : null,
         "concentration": concentration,
         "shotAddition": convertBoolToInt(personalOptions['shotAddition']),
@@ -210,6 +245,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     };
   }
 
+
   Future<void> submitOrder() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
@@ -226,7 +262,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         body: jsonEncode(createOrderData()),
       );
       print("오더 생서 : ${response.body}");
-      print(response.request);
+      print(jsonEncode(createOrderData()));
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         orderId = responseData['orderId'].toString();
@@ -377,10 +413,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final temperature = item['temperature'] == 'ice' ? 'Ice' : 'Hot';
     final cupType = personalOptions['personalTumbler'] == 'USE' ? '개인 텀블러' : '일회용 컵';
 
+    int displayedPrice = item['discountedPrice'] ?? item['price'] ?? 0;
+
     return GestureDetector(
       onTap: () {
         if (personalOptions.isNotEmpty) {
-          _showPersonalOptionsDialog(personalOptions); // personalOptions 정보를 보여주는 Dialog 호출
+          _showPersonalOptionsDialog(personalOptions); // Show personal options dialog
         }
       },
       child: Row(
@@ -406,7 +444,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${(item['price'] ?? 0)}원', style: TextStyle(fontSize: 16, color: Colors.black)),
+              if (selectedCouponId != null && item['productName'] == '아메리카노')
+                Text(
+                  '${item['price']}원',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    decoration: TextDecoration.lineThrough,
+                  ),
+                ),
+              Text(
+                '${item['price']}원',
+                style: TextStyle(fontSize: 16, color: Colors.black),
+              ),
             ],
           ),
         ],
@@ -434,30 +484,87 @@ class _PaymentScreenState extends State<PaymentScreen> {
           setState(() {
             selectedCouponId = selectedCoupon;
           });
-          await submitOrder();
-          await Future.delayed(Duration(seconds: 1));
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => impart(finalPrice: finalPrice, name: name, phone: phone, email: email),
-            ),
-          );
-          impuid = result['imp_uid'];
-          sendPaymentProgress();
+
         }
       },
     );
   }
 
   Widget _buildTotalPriceRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
+    // Calculate the original total without any discount
+    int originalTotal = orders.fold(0, (int sum, item) {
+      int itemPrice = (item['price'] ?? 0) as int;
+      int itemQuantity = (item['quantity'] ?? 1) as int;
+      return sum + (itemPrice);
+    });
+
+    // Calculate the discounted total where discount applies only for "아메리카노" if a coupon is selected
+    int discountedTotal = 0;
+    for (var item in orders) {
+      int itemPrice = (item['price'] ?? 0) as int;
+      int itemQuantity = (item['quantity'] ?? 1) as int;
+
+      if (selectedCouponId != null && item['name'] == '아메리카노') {
+        itemPrice = (itemPrice * 0.8).toInt(); // Apply 20% discount
+      }
+
+      discountedTotal += (itemPrice);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text('총 금액: ', style: TextStyle(fontSize: 16)),
-        Text('${calculateTotalPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        if (selectedCouponId != null) ...[
+          // Show the discount label
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                '아메리카노 20% 할인 쿠폰 사용',
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+            ],
+          ),
+          SizedBox(height: 5),
+          // Display the original total with strike-through
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                '할인 전 금액: ',
+                style: TextStyle(fontSize: 16, color: Colors.grey, decoration: TextDecoration.lineThrough),
+              ),
+              Text(
+                '${originalTotal}원',
+                style: TextStyle(fontSize: 16, color: Colors.grey, decoration: TextDecoration.lineThrough),
+              ),
+            ],
+          ),
+          SizedBox(height: 5),
+          // Display the final discounted total
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('총 금액: ', style: TextStyle(fontSize: 16)),
+              Text('${calculateTotalPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ] else ...[
+          // Display the total when no discount is applied
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text('총 금액: ', style: TextStyle(fontSize: 16)),
+              Text('${calculateTotalPrice()}원', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ],
       ],
     );
   }
+
+
+
 
   Widget _buildPaymentButton() {
     return SizedBox(

@@ -164,7 +164,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '다산 그라찌에 (${widget.orderoption})',
+              '중앙도서관 (${widget.orderoption})',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
@@ -285,6 +285,7 @@ class _CartScreenState extends State<ShoppingCartScreen> {
                   keypoint: 1,
                   orderprice: totalPrice,
                   onename: '',
+                  selectedTemperature: '',
                 )),
           );
         },
@@ -308,14 +309,14 @@ class _CartScreenState extends State<ShoppingCartScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildOptionRow("농도", options['concentration'] ?? "N/A"),
-              _buildOptionRow("샷 추가", options['shotAddition'] == 1 ? "Yes" : "No"),
-              _buildOptionRow("개인 텀블러 사용", options['personalTumbler'] == "USE" ? "Yes" : "No"),
-              _buildOptionRow("펄 추가", options['pearlAddition'] == 1 ? "Yes" : "No"),
-              _buildOptionRow("시럽 추가", options['syrupAddition'] == 1 ? "Yes" : "No"),
-              _buildOptionRow("설탕 추가", options['sugarAddition'] == 1 ? "Yes" : "No"),
-              _buildOptionRow("휘핑 추가", options['whippedCreamAddition'] == 1 ? "Yes" : "No"),
-              _buildOptionRow("얼음 양", options['iceAddition'] ?? "N/A"),
+              _buildOptionRow("농도", _mapConcentrationToKorean(options['concentration'] ?? "N/A")),
+              _buildOptionRow("샷 추가", "${options['shotAddition'] ?? 0}회"),
+              _buildOptionRow("개인 텀블러 사용", options['personalTumbler'] == "USE" ? "사용함" : "사용 안함"),
+              _buildOptionRow("펄 추가", "${options['pearlAddition'] ?? 0}회"),
+              _buildOptionRow("시럽 추가", "${options['syrupAddition'] ?? 0}회"),
+              _buildOptionRow("설탕 추가", "${options['sugarAddition'] ?? 0}회"),
+              _buildOptionRow("휘핑 추가", "${options['whippedCreamAddition'] ?? 0}회"),
+              _buildOptionRow("얼음 양", _mapIceAdditionToKorean(options['iceAddition'] ?? "N/A")),
             ],
           ),
           actions: [
@@ -329,6 +330,35 @@ class _CartScreenState extends State<ShoppingCartScreen> {
         );
       },
     );
+  }
+
+// Mapping functions to convert English options to Korean
+  String _mapConcentrationToKorean(String concentration) {
+    switch (concentration) {
+      case "LIGHT":
+        return "연하게";
+      case "NORMAL":
+        return "보통";
+      case "STRONG":
+        return "진하게";
+      default:
+        return "N/A";
+    }
+  }
+
+  String _mapIceAdditionToKorean(String iceAddition) {
+    switch (iceAddition) {
+      case "NONE":
+        return "없음";
+      case "LESS":
+        return "적게";
+      case "NORMAL":
+        return "보통";
+      case "MORE":
+        return "많이";
+      default:
+        return "N/A";
+    }
   }
 
   Widget _buildOptionRow(String label, String value) {

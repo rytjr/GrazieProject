@@ -224,8 +224,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
-                        pickupButton(context, Icons.local_cafe, "매장 이용", store),
-                        pickupButton(context, Icons.shopping_bag, "To-Go", store),
+                        pickupButton(context, Icons.local_cafe, "매장", store),
+                        pickupButton(context, Icons.shopping_bag, "픽업", store),
                       ],
                     )
                   ],
@@ -298,14 +298,17 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5.0),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          padding: EdgeInsets.symmetric(horizontal: 6.0),
           height: 110,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
+              Icon(
+                Icons.store,
+                size: 90.0,
+                color: Colors.grey, // Adjust the color as needed
               ),
+              SizedBox(width: 10), // Space between the icon and the text
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12.0, top: 8.0, bottom: 8.0),
@@ -313,8 +316,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title ?? '매장 이름 없음', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      Text(subtitle ?? '매장 주소 없음', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      Text(
+                        title ?? '매장 이름 없음',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        subtitle ?? '매장 주소 없음',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
                       Spacer(),
                       Align(
                         alignment: Alignment.bottomRight,
@@ -329,6 +338,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 
 
 
@@ -413,7 +423,8 @@ class _HomeContentState extends State<HomeContent> {
 
   void fetchProducts() async {
     try {
-      Response response = await apiService.getRequest('http://34.64.110.210:8080/api/product/get/all');
+      Response response = await apiService.getRequest(
+          'http://34.64.110.210:8080/api/product/get/all');
       setState(() {
         products = response.data;
       });
@@ -478,7 +489,7 @@ class _HomeContentState extends State<HomeContent> {
                 ? _buildLoggedInUI() // 로그인된 경우
                 : _buildLoggedOutUI(), // 로그인되지 않은 경우
             SizedBox(height: 15), // 버튼과 리스트 사이의 간격
-            SizedBox(height: 20),
+            SizedBox(height: 2),
             SizedBox(
               height: 130, // 제품 리스트 높이 설정
               child: products.isEmpty
@@ -493,12 +504,16 @@ class _HomeContentState extends State<HomeContent> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ProductDetailScreen(
-                            product: products[index], // 제품 정보 전달
-                            storeId: '2', // storeId 전달
-                            orderOption: '매장 이용', // orderOption 전달 (매장 이용 또는 To-Go)
-                            tk: '',
-                          ),
+                          builder: (context) =>
+                              ProductDetailScreen(
+                                product: products[index],
+                                // 제품 정보 전달
+                                storeId: '2',
+                                // storeId 전달
+                                orderOption: '매장 이용',
+                                // orderOption 전달 (매장 이용 또는 To-Go)
+                                tk: '',
+                              ),
                         ),
                       );
                     },
@@ -511,7 +526,8 @@ class _HomeContentState extends State<HomeContent> {
                               width: 85,
                               height: 70,
                               child: Image.network(
-                                'http://34.64.110.210:8080/' + products[index]['image'],
+                                'http://34.64.110.210:8080/' +
+                                    products[index]['image'],
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Icon(Icons.error);
@@ -535,7 +551,7 @@ class _HomeContentState extends State<HomeContent> {
                 },
               ),
             ),
-            SizedBox(height: 23), // 리스트 사이의 간격
+            SizedBox(height: 5), // 리스트 사이의 간격
             Padding(
               padding: const EdgeInsets.fromLTRB(15, 20, 15, 0), // 패딩 설정
               child: Column(
@@ -607,7 +623,8 @@ class _HomeContentState extends State<HomeContent> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => TermsOfUseScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => TermsOfUseScreen()),
                     );
                   },
                   child: Text("회원가입"),
@@ -633,7 +650,6 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 
-  // 로그인한 상태의 UI
   Widget _buildLoggedInUI() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(15, 15, 15, 0),
@@ -641,7 +657,7 @@ class _HomeContentState extends State<HomeContent> {
         children: [
           SizedBox(
             width: double.infinity,
-            height: 110,
+            height: 100,
             child: OutlinedButton(
               onPressed: () {
                 // "내정보 확인" 버튼이 눌렸을 때의 동작
@@ -658,46 +674,52 @@ class _HomeContentState extends State<HomeContent> {
                   borderRadius: BorderRadius.circular(15),
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: "반갑습니다. ",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 60),
+                // Shift content 100 units to the right
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: "반갑습니다. ",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                               ),
-                            ),
-                            TextSpan(
-                              text: "$userName님", // 사용자 이름 부분
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF5B1333), // 원하는 색상으로 변경
+                              TextSpan(
+                                text: "$userName님", // 사용자 이름 부분
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF5B1333), // 원하는 색상으로 변경
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 5),
-                      Text(
-                        "내정보 확인",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
+                        SizedBox(height: 5),
+                        Text(
+                          "내정보 확인",
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                ],
+                      ],
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                  ],
+                ),
               ),
             ),
           ),
@@ -707,7 +729,7 @@ class _HomeContentState extends State<HomeContent> {
     );
   }
 }
-class OrderContent extends StatefulWidget {
+  class OrderContent extends StatefulWidget {
   final int storeId; // 매장 ID
   final String orderMode; // 매장이용 또는 To-Go 정보
 

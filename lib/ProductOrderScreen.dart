@@ -38,6 +38,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   // 퍼스널 옵션 기본값 설정
   String selectedIce = "NORMAL"; // 얼음 옵션
   String selectedTumbler = "NOT_USE"; // 텀블러 사용 여부
+  String selectedConcentration = "NORMAL"; // 농도 옵션 기본값
   int shotAddition = 0; // 샷 추가 기본값
   int pearlAddition = 0; // 펄 추가 기본값
   int syrupAddition = 0; // 시럽 추가 기본값
@@ -135,15 +136,21 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
           keypoint: keypoint,
           orderprice: _getTotalPrice(),
           onename: widget.product['name'],
+          selectedTemperature: widget.selectedTemperature,
         ),
       ),
     );
+    print('온도 ${widget.selectedTemperature}');
   }
 
   Future<void> _addToCart() async {
     SecureStorageService storageService = SecureStorageService();
     String? token = await storageService.getToken();
     final url = Uri.parse('http://34.64.110.210:8080/cart/add');
+
+    String mappedTumbler = selectedTumbler == "사용함" ? "USE" : "NOT_USE";
+    String mappedIce = selectedIce == "없음" ? "NONE" : selectedIce == "적게" ? "LESS" : selectedIce == "보통" ? "NORMAL" : "MORE";
+    String mappedConcentration = selectedConcentration == "연하게" ? "LIGHT" : selectedConcentration == "보통" ? "NORMAL" : "STRONG";
 
     // 서버로 보낼 데이터 생성
     final body = {
@@ -152,14 +159,14 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       "temperature": widget.selectedTemperature.toLowerCase(),
       "quantity": quantity,
       "personalOptions": {
-        "concentration": "LIGHT",
+        "concentration": mappedConcentration,
         "shotAddition": shotAddition,
-        "personalTumbler": selectedTumbler,
+        "personalTumbler": mappedTumbler,
         "pearlAddition": pearlAddition,
         "syrupAddition": syrupAddition,
         "sugarAddition": sugarAddition,
         "whippedCreamAddition": whippedCreamAddition,
-        "iceAddition": selectedIce
+        "iceAddition": mappedIce
       }
     };
 
@@ -174,6 +181,9 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
         body: jsonEncode(body),
       );
 
+      print(body);
+      print("장바구니 담기 : ${response.body}");
+      print(response.request);
       if (response.statusCode == 200) {
         _showAddToCartModal();
       } else {
@@ -367,8 +377,8 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                   SizedBox(height: 10),
                   TextField(
                     decoration: InputDecoration(
-                      labelText: "추가 요구사항을 적어주세요",
-                      hintText: "예: 얼음은 적게, 시럽 추가",
+                      labelText: "요청사항이 있으면 적어주세요",
+                      hintText: "",
                       filled: true,
                       fillColor: Colors.grey[100],
                       border: OutlineInputBorder(
@@ -491,6 +501,9 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
   Widget _buildSizeOption(String title, int price) {
     bool isSelected = selectedSize == title;
 
+    // Adjust price if the temperature is ICE
+    int adjustedPrice = widget.selectedTemperature == 'ICE' ? price + 300 : price;
+
     return Expanded(
       child: GestureDetector(
         onTap: () {
@@ -517,7 +530,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
               ),
               SizedBox(height: 5),
               Text(
-                "${price}원",
+                "${adjustedPrice}원",
                 style: TextStyle(
                   color: isSelected ? Colors.white : Colors.black,
                 ),
@@ -528,6 +541,7 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
       ),
     );
   }
+
 
   void _showPersonalOptionModal(BuildContext context) {
     showModalBottomSheet(
@@ -584,15 +598,21 @@ class _ProductOrderScreenState extends State<ProductOrderScreen> {
                       });
                       setState(() {});
                     }),
-                    _buildHorizontalRadioOption("얼음", selectedIce, ["NONE", "LESS", "NORMAL", "MORE"], (value) {
+                    _buildHorizontalRadioOption("얼음", selectedIce, ["없음", "적게", "보통", "많이"], (value) {
                       setModalState(() {
                         selectedIce = value!;
                       });
                       setState(() {});
                     }),
-                    _buildHorizontalRadioOption("텀블러 사용 여부", selectedTumbler, ["USE", "NOT_USE"], (value) {
+                    _buildHorizontalRadioOption("텀블러 사용 여부", selectedTumbler, ["사용함", "사용 안함"], (value) {
                       setModalState(() {
                         selectedTumbler = value!;
+                      });
+                      setState(() {});
+                    }),
+                    _buildHorizontalRadioOption("농도", selectedConcentration, ["연하게", "보통", "진하게"], (value) {
+                      setModalState(() {
+                        selectedConcentration = value!;
                       });
                       setState(() {});
                     }),

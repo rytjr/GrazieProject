@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:fluttertest/LoginScreen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+
+import 'package:flutter/services.dart' show rootBundle;
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
+
 
 class UserInScreen extends StatefulWidget {
   @override
@@ -19,8 +22,6 @@ class _UserInScreenState extends State<UserInScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final ImagePicker _picker = ImagePicker();
-  XFile? _imageFile;
   bool _isButtonEnabled = false;
 
   // 회원가입 요청
@@ -47,9 +48,9 @@ class _UserInScreenState extends State<UserInScreen> {
         if (response.statusCode == 201) {
           final userId = int.tryParse(response.body);
           if (userId != null) {
-            // 회원가입 성공 시 이미지 선택 후 추가 정보 요청
+            // 회원가입 성공 시 추가 정보 요청
             print('성공 $userId');
-            await _pickImage(userId);
+            await _sendAdditionalInfo(userId);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('서버 응답 형식이 올바르지 않습니다.')),
@@ -68,36 +69,24 @@ class _UserInScreenState extends State<UserInScreen> {
     }
   }
 
-  // 이미지 선택
-  Future<void> _pickImage(int userId) async {
-    _imageFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (_imageFile != null) {
-      print("이미지 경로: ${_imageFile!.path}");
-      // 선택된 이미지 경로를 사용해 추가 정보 전송
-      await _sendAdditionalInfo(userId, _imageFile!.path);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('이미지가 선택되지 않았습니다.')),
-      );
-    }
-  }
-
-  // 추가 정보 요청
-  Future<void> _sendAdditionalInfo(int userId, String imagePath) async {
+  Future<void> _sendAdditionalInfo(int userId) async {
     final uri = Uri.parse(
         'http://34.64.110.210:8080/users/additional-info/$userId/additionalInfoJoin');
     final request = http.MultipartRequest('POST', uri);
 
-    // 선택된 이미지 파일 추가
+    // 기본 이미지를 전송하도록 설정
+    final byteData = await rootBundle.load('android/assets/images/event4.png');
+    final file = File('${(await getTemporaryDirectory()).path}/default_profile_image.jpg');
+    await file.writeAsBytes(byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+
     request.files.add(await http.MultipartFile.fromPath(
       'profileImage',
-      imagePath,
+      file.path,
     ));
 
     // additionalInfo 필드 추가
     final additionalInfo = {
-      "nickname": "tyer",
+      "nickname": "heeSu",
       "gender": "MALE"
     };
     request.fields['additionalInfo'] = jsonEncode(additionalInfo);
@@ -126,6 +115,9 @@ class _UserInScreenState extends State<UserInScreen> {
       );
     }
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {

@@ -29,6 +29,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate the displayed price based on the selected temperature
+    int basePrice = widget.product['smallPrice'] ?? 0;
+    int displayPrice = selectedTemperature == 'ICE' ? basePrice + 300 : basePrice;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
@@ -43,11 +47,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 이미지 영역
+              // 이미지 영역
               Image.network(
                 'http://34.64.110.210:8080/' + widget.product['image'] ?? 'https://example.com/default_image.png',
                 width: double.infinity,
                 height: 190,
-                fit: BoxFit.cover,
+                fit: BoxFit.contain, // Adjusted to show the full image without cropping
                 errorBuilder: (context, error, stackTrace) {
                   return Icon(Icons.error, size: 100, color: Colors.red); // 이미지 로드 실패 시
                 },
@@ -78,7 +83,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(22, 30, 22, 0),
                 child: Text(
-                  '${widget.product['smallPrice'] ?? 0}원',
+                  '${displayPrice}원',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.bold,
@@ -178,7 +183,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
 
     if (hotAble) {
-      buttons.add( 
+      buttons.add(
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(left: 5.0, right: 22.0),
@@ -214,3 +219,4 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return buttons;
   }
 }
+
