@@ -213,9 +213,8 @@ class _OrderListScreenState extends State<OrderListScreen> {
     final orderDate = DateTime.parse(orderDTO['order_date']);
     final formattedDate = DateFormat('yyyy-MM-dd').format(orderDate);
 
-    return ExpansionTile(
-      title: Text('주문 날짜: $formattedDate'),
-      subtitle: Text('총 금액: ${orderDTO['final_price']}원'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: orderItems.map<Widget>((item) {
         final product = item['product'];
         return ListTile(
@@ -231,7 +230,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
           ),
           title: Text(product != null ? product['name'] : '제품 이름 없음'),
           subtitle: Text(
-            '가격: ${item['product_price']}원\n수량: ${item['quantity']}개',
+            '가격: ${item['product_price']}원\n수량: ${item['quantity']}개\n주문 날짜: $formattedDate',
           ),
         );
       }).toList(),

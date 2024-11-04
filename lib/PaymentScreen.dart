@@ -222,7 +222,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         "quantity": item['quantity'] ?? 1,
         "size": item['size'] ?? "Solo",
         "temperature": item['temperature'] ?? "hot",
-        "couponId": (selectedCouponId != null && item['name'] == '아메리카노')
+        "couponId": (selectedCouponId != null && item['productName'] == '아메리카노')
             ? int.parse(selectedCouponId!)
             : null,
         "concentration": concentration,
@@ -446,15 +446,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (selectedCouponId != null && item['productName'] == '아메리카노')
-                Text(
-                  '${item['price']}원',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    decoration: TextDecoration.lineThrough,
-                  ),
-                ),
               Text(
                 '${item['price']}원',
                 style: TextStyle(fontSize: 16, color: Colors.black),
