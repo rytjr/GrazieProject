@@ -64,7 +64,7 @@ class _OrderListScreenState extends State<OrderListScreen> {
         'Authorization': 'Bearer $token',
       },
     );
-    print("주문내역 : ${response.body}");
+    print("주문내역 : ${jsonDecode(utf8.decode(response.bodyBytes))}");
     print(response.request);
     if (response.statusCode == 200) {
       setState(() {
@@ -210,28 +210,31 @@ class _OrderListScreenState extends State<OrderListScreen> {
       );
     }
 
-    final firstItem = orderItems[0];
-    final product = firstItem['product'];
-
     final orderDate = DateTime.parse(orderDTO['order_date']);
     final formattedDate = DateFormat('yyyy-MM-dd').format(orderDate);
 
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 35, // Sets the circle to a diameter of 50x50
-        backgroundImage: product != null
-            ? NetworkImage('http://34.64.110.210:8080/' + product['image'])
-            : null,
-        onBackgroundImageError: (error, stackTrace) {
-          print(error); // Error handling for image load failure
-        },
-        child: product == null ? Icon(Icons.image_not_supported) : null,
-      ),
-      title: Text(product != null ? product['name'] : '제품 이름 없음'),
-      subtitle: Text(
-        '가격: ${firstItem['product_price']}원\n주문 날짜: $formattedDate',
-      ),
-      isThreeLine: true,
+    return ExpansionTile(
+      title: Text('주문 날짜: $formattedDate'),
+      subtitle: Text('총 금액: ${orderDTO['final_price']}원'),
+      children: orderItems.map<Widget>((item) {
+        final product = item['product'];
+        return ListTile(
+          leading: CircleAvatar(
+            radius: 25,
+            backgroundImage: product != null
+                ? NetworkImage('http://34.64.110.210:8080/' + product['image'])
+                : null,
+            onBackgroundImageError: (error, stackTrace) {
+              print(error);
+            },
+            child: product == null ? Icon(Icons.image_not_supported) : null,
+          ),
+          title: Text(product != null ? product['name'] : '제품 이름 없음'),
+          subtitle: Text(
+            '가격: ${item['product_price']}원\n수량: ${item['quantity']}개',
+          ),
+        );
+      }).toList(),
     );
   }
 }

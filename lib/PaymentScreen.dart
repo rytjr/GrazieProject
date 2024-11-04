@@ -222,7 +222,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         "quantity": item['quantity'] ?? 1,
         "size": item['size'] ?? "Solo",
         "temperature": item['temperature'] ?? "hot",
-        "couponId": selectedCouponId != null ? int.parse(selectedCouponId!) : null,
+        "couponId": (selectedCouponId != null && item['name'] == '아메리카노')
+            ? int.parse(selectedCouponId!)
+            : null,
         "concentration": concentration,
         "shotAddition": convertBoolToInt(personalOptions['shotAddition']),
         "personalTumbler": convertBoolToInt(personalOptions['personalTumbler']),
