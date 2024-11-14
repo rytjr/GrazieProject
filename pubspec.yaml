@@ -42,7 +42,6 @@ dependencies:
   json_annotation: ^4.8.1
   iamport_webview_flutter: 3.0.7
   iamport_flutter: ^0.10.19
-  uni_links: ^0.5.1
   path_provider: ^2.0.9  # Check for the latest version
 
 dev_dependencies:
