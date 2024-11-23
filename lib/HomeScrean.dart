@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String storeId = ''; // storeId 변수 추가
   String orderMode = ''; // orderMode 변수 추가
   String tokentest = '';
+  int resylt = 0;
 
 
 
